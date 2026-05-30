@@ -1,59 +1,73 @@
 # Requirements
+
 ## Services & Applications
-- Home media server (Jellyfin)
-    - Server and client --> Mini PC for TV
-    - DVD and Blu-ray ripping and encoding
-    - Torrent downloading and management
-- VPN server to access network remotely
-- Linux VM for development and testing
-- Windows VM for occasional use
-- Web server for personal projects
-- File sharing service (Samba and Nextcloud)
+
+### Media
+- Home media server (Jellyfin) — running
+- DVD and Blu-ray ripping and encoding
+- Living room media box (Bazzite + Steam Big Picture) to replace Roku
+  - Gamescope session for console-like TV experience
+  - Browser-based streaming apps (Netflix, Disney+, etc.)
+  - Moonlight for low-latency game streaming from gaming PC
+- Torrent downloading and management
+
+### Files & Storage
+- SMB file sharing — running
+- Nextcloud to replace Google Drive (document sync, mobile apps, arbitrary files)
+- Immich for photo/video backup — running
+
+### Networking & Remote Access
+- Tailscale for remote access tunneling — running
+- Commercial VPN (e.g. Mullvad) for location privacy and geo-unblocking
+- Pi-hole for network-wide ad-blocking and DNS
+- VLANs for traffic separation (guest, trusted, homelab, IoT)
+- Hardware firewall (pfSense or OPNsense on N100 mini PC)
+
+### Development & Self-Hosting
+- Linux VM for development and testing (when dedicated hardware arrives)
+- Self-hosted personal projects via Cloudflare Tunnel (no inbound ports, no static IP needed)
 - Minecraft server
-- Gaming PC network access for game streaming to TV or laptop
+
+### Gaming
+- Gaming PC dual-boot: Windows (anti-cheat games) + Linux (Steam, AI workloads)
+- Sunshine on gaming PC for streaming to living room box via Moonlight
+
 ## Storage
-- Personal documents
-- Media files (photos, videos, music)
-- Home media server (Jellyfin)
+- Personal documents (Nextcloud)
+- Photos and video backup (Immich)
+- Media library (Jellyfin)
+- Offsite backups via Restic to Backblaze B2 (S3-compatible, cheap)
+- ZFS snapshots for local point-in-time recovery
+
 ## Networking
-- Wired Ethernet for main devices (gaming PC, server, TV box)
-- Wi-Fi for mobile devices (laptops, smartphones, tablets)
+- ISP modem in bridge mode (WAN termination only)
+- N100 mini PC running pfSense or OPNsense as primary router and firewall
+- Managed switch with VLAN support
+- Wired Ethernet for primary devices (NAS, gaming PC, TV box)
+- Wi-Fi access points for mobile devices
+
 ## Security
-- VLANs to separate traffic (guest network, trusted devices, homelab devices)
-- Pi-hole for ad-blocking and network-wide DNS
-- VPN for location spoofing
-- Hardware firewall for perimeter security
+- VLANs: guest, work, trusted, homelab
+- Pi-hole on a dedicated Raspberry Pi (independent of main server — DNS always up)
+- Tailscale for zero-trust remote access
+- Commercial VPN for outbound privacy and geo-unblocking
+- Hardware firewall at the perimeter
+- Cloudflare Tunnel for self-hosted project exposure (no open inbound ports)
+
 ## Monitoring
-- Network monitoring (bandwidth usage, device status)
-- Server monitoring (CPU, memory, disk usage)
-- Alerts for critical issues (e.g., server down, high resource usage)
-- Power monitoring (UPS status, power consumption)
-- Grafana and Prometheus for visualization and alerting
-## Backup and Recovery
-- Regular backups of important data (documents, media files)
-- Offsite backups for critical data
-- Automated backup solutions (e.g., Duplicati, Restic)
+- Prometheus + Grafana for metrics and dashboards
+- Alerts for critical issues (disk health, server down, high resource usage)
+- UPS monitoring and power status
+
+## Backup & Recovery
+- Automated backups of critical datasets
+- Offsite target: Backblaze B2 via Restic or Duplicati
+- ZFS snapshots for local recovery
+- Full strategy still to be defined
+
 ## Automation
-- Ansible for configuration management and deployment
-- Scheduled tasks for maintenance (e.g., updates, backups)
-- Terraform for infrastructure as code 
-- Jenkins for CI/CD pipelines --> GitOps configuration as code
-
-## Hardware
-- Existing gaming PC for network gaming
-    - Smaller M.2 SSD with Windows for Fortnite and other games with kernal level anti-cheat
-    - Larger NVMe SSD for Linux and other gaming (Steam)
-    - AI workloads
-- Current monitors and peripherals connected to gaming PC / work laptop kvm
-- Raspberry PI for TV media box (Kodi, Jellyfin client)
-- Old Laptop repurposed as a Linux VM host (Proxmox) --> Will be replaced eventually with a dedicated server, maybe a
-    nuc cluster or small tower server
-- Old desktop repurposed as a NAS (TrueNAS) --> Will be replaced eventually with a dedicated NAS device or
-    another server
-- Switch with VLAN support for network segmentation
-- Fanless N100 mini PC for router and firewall (pfSense or OPNsense)
-- Uninterruptible Power Supply (UPS) for power backup and surge protection
-- Access points for Wi-Fi coverage
-- 10m flat Ethernet cable for connecting devices in different rooms
-- Another Raspberry Pi for Pi-hole and other lightweight services (no dependency on server)
-
+- Ansible for TrueNAS configuration management — in place
+- Terraform for infrastructure provisioning (planned)
+- GitHub Actions with a self-hosted runner for GitOps
+  - Push to main triggers ansible-playbook runs automatically
+  - No CI/CD server to maintain
