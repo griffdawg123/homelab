@@ -32,9 +32,10 @@
 ### DNS & Internal Routing
 - Vanity URLs / custom local DNS via Pi-hole (e.g. `jellyfin.home`, `immich.home`)
 - Reverse proxy (Nginx Proxy Manager or Caddy) to route by hostname without port numbers
-- Single domain for both internal and external access:
-  - Internal: Pi-hole DNS record → reverse proxy → service
+- Single real domain (registered on Cloudflare, ~$10/yr) for both internal and external access:
+  - Internal: Pi-hole overrides DNS for the domain → reverse proxy → service
   - External: Cloudflare Tunnel → same reverse proxy → service
+  - Consistent URLs everywhere (e.g. `jellyfin.yourdomain.com`) regardless of location
 
 ### Development & Self-Hosting
 - Linux VM for development and testing (when dedicated hardware arrives)
