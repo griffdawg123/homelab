@@ -36,6 +36,9 @@ truenas_ssh_keys:
 # Datasets that already exist are left untouched — no data will be modified.
 # ---------------------------------------------------------------------------
 truenas_shares:
+  - dataset: "stowage/nextcloud"
+  - dataset: "stowage/nextcloud/html"
+  - dataset: "stowage/nextcloud/data"
   - dataset: "stowage/stowage-share"
     smb:
       enabled: true

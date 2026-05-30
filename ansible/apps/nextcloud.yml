@@ -1,0 +1,67 @@
+---
+app_name: nextcloud
+catalog_app: nextcloud
+train: stable
+
+values:
+  TZ: "Australia/Sydney"
+
+  nextcloud:
+    admin_user:     "{{ nextcloud_admin_user }}"
+    admin_password: "{{ nextcloud_admin_password }}"
+    db_password:    "{{ nextcloud_db_password }}"
+    db_user:        nextcloud
+    redis_password: "{{ nextcloud_redis_password }}"
+    # Set to your domain once configured, e.g. nextcloud.yourdomain.com
+    host: ""
+    data_dir_path:  /var/www/html/data
+    postgres_image_selector: postgres_18_image
+    php_memory_limit:              512
+    php_upload_limit:              3
+    max_execution_time:            30
+    op_cache_memory_consumption:   128
+    op_cache_interned_strings_buffer: 32
+    cron:
+      enabled: false
+    imaginary:
+      enabled: false
+    additional_envs: []
+    apt_packages:    []
+    tesseract_languages: []
+
+  storage:
+    html:
+      type: host_path
+      host_path_config:
+        acl_enable: false
+        path: /mnt/stowage/nextcloud/html
+    data:
+      type: host_path
+      host_path_config:
+        acl_enable: false
+        path: /mnt/stowage/nextcloud/data
+    postgres_data:
+      type: ix_volume
+      ix_volume_config:
+        acl_enable:   false
+        dataset_name: postgres_data
+    additional_storage: []
+
+  network:
+    certificate_id: null
+    web_port:
+      bind_mode:   published
+      host_ips:    []
+      port_number: 30027
+    dns_opts: []
+    networks: []
+
+  resources:
+    limits:
+      cpus:   2
+      memory: 4096
+    gpus:
+      use_all_gpus: false
+      nvidia_gpu_selection: {}
+
+  labels: []

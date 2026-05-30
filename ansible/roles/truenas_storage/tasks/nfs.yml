@@ -28,4 +28,5 @@
     label: "{{ share.dataset }}"
   when:
     - share.nfs.enabled | default(false)
+    - share.nfs is defined
     - nfs_existing.json | selectattr('path', 'equalto', '/mnt/' ~ share.dataset) | list | length == 0
