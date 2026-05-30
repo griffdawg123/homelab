@@ -16,3 +16,9 @@ immich_redis_password: "REPLACE_WITH_REDIS_PASSWORD"
 # Tailscale auth key — generate at tailscale.com/admin/settings/keys
 # auth_once: true means this is only used on first install; state persists in ix_volume after that
 tailscale_auth_key: "REPLACE_WITH_AUTH_KEY"
+
+# Nextcloud credentials — no special chars (&@#%) in redis_password
+nextcloud_admin_user:     "REPLACE_WITH_ADMIN_USERNAME"
+nextcloud_admin_password: "REPLACE_WITH_ADMIN_PASSWORD"
+nextcloud_db_password:    "REPLACE_WITH_DB_PASSWORD"
+nextcloud_redis_password: "REPLACE_WITH_REDIS_PASSWORD"

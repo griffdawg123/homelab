@@ -23,7 +23,7 @@
   loop: "{{ truenas_shares }}"
   loop_control:
     loop_var: share
-    label: "{{ share.smb.name }}"
+    label: "{{ share.dataset }}"
   when:
     - share.smb.enabled | default(false)
     - smb_existing.json | selectattr('path', 'equalto', '/mnt/' ~ share.dataset) | list | length == 0
