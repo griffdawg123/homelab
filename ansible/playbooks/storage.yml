@@ -1,0 +1,6 @@
+---
+- name: Configure TrueNAS storage shares
+  hosts: truenas
+  gather_facts: false
+  roles:
+    - truenas_storage

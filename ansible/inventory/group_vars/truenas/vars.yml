@@ -1,0 +1,62 @@
+---
+# TrueNAS SCALE connection
+# Replace with your TrueNAS IP or hostname.
+# Use https:// if you have a cert; set truenas_validate_certs: true if it's signed.
+truenas_api_url: "http://192.168.1.104/api/v2.0"
+truenas_validate_certs: false
+
+truenas_api_headers:
+  Authorization: "Bearer {{ truenas_api_key }}"
+  Content-Type: "application/json"
+
+# ---------------------------------------------------------------------------
+# System settings
+# ---------------------------------------------------------------------------
+truenas_timezone: "Australia/Sydney"
+truenas_ssh_enabled: true
+
+truenas_ntp_servers:
+  - address: "0.au.pool.ntp.org"
+    prefer: true
+  - address: "1.au.pool.ntp.org"
+  - address: "2.au.pool.ntp.org"
+
+# SSH public keys to push to TrueNAS user accounts.
+# List all authorized public keys explicitly so this works from any workstation.
+# The full sshpubkey field is replaced on each run, so all keys must be listed here.
+truenas_ssh_keys:
+  - username: "truenas_admin"
+    pubkeys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIADnvd9MVxARpA+s6JNKeFtcAC6zxYcZ3aUQll+0sd+l doyle@DESKTOP-CPBAQEQ"
+
+# ---------------------------------------------------------------------------
+# Storage shares
+# Each entry creates a ZFS dataset (if absent) and the requested share types.
+# The dataset name must be rooted in your existing pool (e.g. "tank/media").
+# Datasets that already exist are left untouched — no data will be modified.
+# ---------------------------------------------------------------------------
+truenas_shares:
+  - dataset: "stowage/stowage-share"
+    smb:
+      enabled: true
+      name: "stowage-share"
+      comment: "File Share"
+      ro: false
+    nfs:
+      enabled: true
+      # Restrict to specific subnets/hosts, or leave empty for unrestricted.
+      networks: []   # e.g. ["192.168.1.0/24"]
+      hosts: []      # e.g. ["192.168.1.50"]
+      ro: false
+
+# ---------------------------------------------------------------------------
+# Local users
+# Passwords are stored in vault.yml under truenas_user_passwords.<username>
+# ---------------------------------------------------------------------------
+truenas_users:
+  - username: "griffin"
+    full_name: "Griffin"
+    smb: true
+
+immich_login_email: doylegriffin32@gmail.com
+

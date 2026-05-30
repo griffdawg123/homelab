@@ -1,0 +1,6 @@
+---
+- name: Configure TrueNAS local users
+  hosts: truenas
+  gather_facts: false
+  roles:
+    - truenas_users

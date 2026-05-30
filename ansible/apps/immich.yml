@@ -1,0 +1,54 @@
+---
+app_name: immich
+catalog_app: immich
+train: community
+
+values:
+  TZ: "Australia/Sydney"
+
+  immich:
+    db_password:             "{{ immich_db_password }}"
+    redis_password:          "{{ immich_redis_password }}"
+    db_storage_type:         HDD
+    enable_ml:               true
+    log_level:               log
+    ml_image_selector:       ml_image
+    postgres_image_selector: vectorchord_15_image
+    additional_envs:         []
+    hugging_face_endpoint:   ""
+
+  storage:
+    data:
+      type: host_path
+      host_path_config:
+        acl_enable: false
+        path: /mnt/stowage/immich/data
+    postgres_data:
+      type: host_path
+      host_path_config:
+        acl_enable: false
+        auto_permissions: true
+        path: /mnt/stowage/immich/pgData
+    ml_cache:
+      type: temporary
+    additional_storage: []
+
+  network:
+    web_port:
+      bind_mode: published
+      host_ips: []
+      port_number: 30041
+
+  resources:
+    limits:
+      cpus: 2
+      memory: 6000
+    gpus:
+      use_all_gpus: false
+      nvidia_gpu_selection: {}
+
+  run_as:
+    user:  568
+    group: 568
+
+  labels: []

@@ -1,0 +1,190 @@
+---
+- name: Gather TrueNAS facts
+  hosts: truenas
+  gather_facts: false
+
+  vars:
+    api: "{{ truenas_api_url }}"
+    headers: "{{ truenas_api_headers }}"
+    certs: "{{ truenas_validate_certs }}"
+
+  tasks:
+    - name: Fetch system info
+      ansible.builtin.uri:
+        url: "{{ api }}/system/info"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_system
+
+    - name: Fetch pools
+      ansible.builtin.uri:
+        url: "{{ api }}/pool"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_pools
+
+    - name: Fetch datasets
+      ansible.builtin.uri:
+        url: "{{ api }}/pool/dataset"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_datasets
+
+    - name: Fetch SMB shares
+      ansible.builtin.uri:
+        url: "{{ api }}/sharing/smb"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_smb
+
+    - name: Fetch NFS shares
+      ansible.builtin.uri:
+        url: "{{ api }}/sharing/nfs"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_nfs
+
+    - name: Fetch services
+      ansible.builtin.uri:
+        url: "{{ api }}/service"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_services
+
+    - name: Fetch network interfaces
+      ansible.builtin.uri:
+        url: "{{ api }}/interface"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_ifaces
+
+    - name: Fetch installed apps
+      ansible.builtin.uri:
+        url: "{{ api }}/app"
+        headers: "{{ headers }}"
+        validate_certs: "{{ certs }}"
+      register: r_apps
+
+    # -------------------------------------------------------------------------
+
+    - name: "System"
+      ansible.builtin.debug:
+        msg:
+          hostname: "{{ r_system.json.hostname }}"
+          version:  "{{ r_system.json.version }}"
+          uptime:   "{{ r_system.json.uptime }}"
+          cores:    "{{ r_system.json.cores }}"
+          memory:   "{{ (r_system.json.physmem / 1073741824) | round(1) }} GiB"
+
+    - name: "Pools"
+      ansible.builtin.debug:
+        msg: "{{ r_pools.json | map(attribute='name') | list }}"
+
+    - name: "Pool detail: {{ item.name }}"
+      ansible.builtin.debug:
+        msg:
+          status:    "{{ item.status }}"
+          healthy:   "{{ item.healthy }}"
+          size:      "{{ (item.size / 1073741824) | round(1) }} GiB"
+          allocated: "{{ (item.allocated / 1073741824) | round(1) }} GiB"
+          free:      "{{ (item.free / 1073741824) | round(1) }} GiB"
+      loop: "{{ r_pools.json }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: "Datasets (top-level)"
+      ansible.builtin.debug:
+        msg: >-
+          {{
+            r_datasets.json
+            | selectattr('id', 'match', '^[^/]+/[^/]+$')
+            | map(attribute='id')
+            | list
+          }}
+
+    - name: "SMB shares"
+      ansible.builtin.debug:
+        msg: >-
+          {{
+            r_smb.json | map(attribute='name') | list
+            if r_smb.json | length > 0
+            else 'none configured'
+          }}
+
+    - name: "SMB share detail: {{ item.name }}"
+      ansible.builtin.debug:
+        msg:
+          path:    "{{ item.path }}"
+          enabled: "{{ item.enabled }}"
+          ro:      "{{ item.ro }}"
+      loop: "{{ r_smb.json }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: r_smb.json | length > 0
+
+    - name: "NFS shares"
+      ansible.builtin.debug:
+        msg: >-
+          {{
+            r_nfs.json | map(attribute='path') | list
+            if r_nfs.json | length > 0
+            else 'none configured'
+          }}
+
+    - name: "NFS share detail: {{ item.path }}"
+      ansible.builtin.debug:
+        msg:
+          enabled:  "{{ item.enabled }}"
+          ro:       "{{ item.ro }}"
+          networks: "{{ item.networks }}"
+          hosts:    "{{ item.hosts }}"
+      loop: "{{ r_nfs.json }}"
+      loop_control:
+        label: "{{ item.path }}"
+      when: r_nfs.json | length > 0
+
+    - name: "Services"
+      ansible.builtin.debug:
+        msg: "{{ r_services.json | map(attribute='service') | sort | list }}"
+
+    - name: "Service states"
+      ansible.builtin.debug:
+        msg: "{{ item.service }}: state={{ item.state }} enable={{ item.enable }}"
+      loop: "{{ r_services.json | sort(attribute='service') }}"
+      loop_control:
+        label: "{{ item.service }}"
+
+    - name: "Apps"
+      ansible.builtin.debug:
+        msg: >-
+          {{
+            r_apps.json | map(attribute='name') | sort | list
+            if r_apps.json | length > 0
+            else 'none installed'
+          }}
+
+    - name: "App detail: {{ item.name }}"
+      ansible.builtin.debug:
+        msg:
+          state:   "{{ item.state }}"
+          version: "{{ item.version | default('unknown') }}"
+          catalog: "{{ item.metadata.train | default('custom') }}"
+      loop: "{{ r_apps.json | sort(attribute='name') }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: r_apps.json | length > 0
+
+    - name: "Network interfaces"
+      ansible.builtin.debug:
+        msg:
+          name:    "{{ item.name }}"
+          aliases: >-
+            {{
+              item.aliases
+              | selectattr('type', 'in', ['INET', 'INET6'])
+              | map(attribute='address')
+              | list
+            }}
+      loop: "{{ r_ifaces.json }}"
+      loop_control:
+        label: "{{ item.name }}"

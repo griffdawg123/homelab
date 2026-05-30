@@ -1,0 +1,18 @@
+---
+- name: Fetch installed apps
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/app"
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+  register: r_installed_apps
+
+- name: Set installed apps fact
+  ansible.builtin.set_fact:
+    installed_apps: "{{ r_installed_apps.json }}"
+
+- name: Apply app configs
+  ansible.builtin.include_tasks: apply_app.yml
+  loop: "{{ lookup('fileglob', playbook_dir + '/../apps/*.yml', wantlist=True) | sort }}"
+  loop_control:
+    loop_var: app_file
+    label: "{{ app_file | basename }}"

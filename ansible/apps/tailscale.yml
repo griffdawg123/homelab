@@ -1,0 +1,39 @@
+---
+app_name: tailscale
+catalog_app: tailscale
+train: community
+
+values:
+  TZ: "Australia/Sydney"
+
+  tailscale:
+    auth_key:           "{{ tailscale_auth_key }}"
+    auth_once:          true
+    hostname:           truenas-scale
+    userspace:          true
+    accept_dns:         false
+    accept_routes:      false
+    advertise_exit_node: false
+    advertise_routes:   []
+    extra_args:         []
+    tailscaled_args:    []
+    additional_envs:    []
+    reset:              false
+
+  network:
+    host_network: true
+
+  storage:
+    state:
+      type: ix_volume
+      ix_volume_config:
+        acl_enable:   false
+        dataset_name: state
+    additional_storage: []
+
+  resources:
+    limits:
+      cpus:   2
+      memory: 4096
+
+  labels: []

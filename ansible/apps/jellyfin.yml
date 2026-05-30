@@ -1,0 +1,21 @@
+---
+app_name: jellyfin
+type: custom
+
+compose:
+  services:
+    jellyfin:
+      container_name: jellyfin
+      image: ghcr.io/jellyfin/jellyfin:latest
+      restart: unless-stopped
+      network_mode: bridge
+      user: "568:568"
+      ports:
+        - "8096:8096/tcp"
+      environment:
+        - TZ=Australia/Sydney
+      volumes:
+        - /mnt/stowage/jellyfin/config:/config:rw
+        - /mnt/stowage/jellyfin/cache:/cache:rw
+        - /mnt/stowage/stowage-share/media/movies:/movies:rw
+        - /mnt/stowage/stowage-share/media/shows:/shows:rw

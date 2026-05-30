@@ -1,0 +1,6 @@
+---
+- name: Configure TrueNAS system settings
+  hosts: truenas
+  gather_facts: false
+  roles:
+    - truenas_settings

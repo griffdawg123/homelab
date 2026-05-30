@@ -1,0 +1,6 @@
+---
+- name: Configure TrueNAS apps
+  hosts: truenas
+  gather_facts: false
+  roles:
+    - truenas_apps

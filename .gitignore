@@ -1,0 +1,16 @@
+# Ansible vault password files
+.vault_pass
+*.vault_pass
+
+# Sensitive variable overrides
+*.local.yml
+
+# Terraform state (for later)
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.backup
+terraform/**/*.tfvars
+!terraform/**/*.tfvars.example
+
+# OS
+.DS_Store

@@ -1,0 +1,21 @@
+---
+- name: Fetch existing NTP servers
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/system/ntpserver"
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+  register: r_ntp
+
+- name: Add missing NTP servers
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/system/ntpserver"
+    method: POST
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+    body_format: json
+    body:
+      address: "{{ item.address }}"
+      prefer:  "{{ item.prefer | default(false) }}"
+    status_code: 200
+  loop: "{{ truenas_ntp_servers }}"
+  when: r_ntp.json | selectattr('address', 'equalto', item.address) | list | length == 0

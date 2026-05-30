@@ -1,0 +1,30 @@
+---
+# Checks whether each dataset exists before attempting to create it.
+# Datasets with existing data are never modified or deleted.
+- name: Check if dataset exists
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/pool/dataset/id/{{ share.dataset | replace('/', '%2F') }}"
+    method: GET
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+    status_code: [200, 404]
+  register: dataset_check
+  loop: "{{ truenas_shares }}"
+  loop_control:
+    loop_var: share
+    label: "{{ share.dataset }}"
+
+- name: Create missing datasets
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/pool/dataset"
+    method: POST
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+    body_format: json
+    body:
+      name: "{{ item.share.dataset }}"
+    status_code: 200
+  loop: "{{ dataset_check.results }}"
+  loop_control:
+    label: "{{ item.share.dataset }}"
+  when: item.status == 404
