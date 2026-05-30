@@ -9,6 +9,8 @@
 
 ### Planned
 - Nextcloud — Google Drive replacement (document sync, file storage)
+- Nginx Proxy Manager or Caddy — reverse proxy for vanity URLs and routing
+- Vaultwarden — self-hosted Bitwarden password manager (deferred until infra is stable)
 - Restic / Duplicati — automated backups to Backblaze B2
 - Prometheus + Grafana — metrics and alerting
 - Torrent client (e.g. qBittorrent)

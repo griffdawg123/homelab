@@ -5,11 +5,16 @@
 
 ## Up Next
 - [ ] Add Nextcloud to apps playbook
+- [ ] Add reverse proxy (Nginx Proxy Manager or Caddy) to apps playbook
+- [ ] Configure Pi-hole local DNS records for vanity URLs (e.g. `jellyfin.home`)
 - [ ] Add qBittorrent to apps playbook
 - [ ] Add Prometheus + Grafana to apps playbook
 - [ ] Add Sunshine to apps playbook (for Moonlight game streaming)
 - [ ] Wire up GitHub Actions self-hosted runner for GitOps
 - [ ] Define backup strategy and implement Restic jobs to Backblaze B2
+
+## Deferred (until infrastructure is stable)
+- [ ] Vaultwarden — evaluate uptime confidence before migrating passwords
 
 ## Hardware
 - [ ] Source living room media box (Bazzite + Moonlight)

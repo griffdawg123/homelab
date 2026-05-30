@@ -23,6 +23,19 @@
 - VLANs for traffic separation (guest, trusted, homelab, IoT)
 - Hardware firewall (pfSense or OPNsense on N100 mini PC)
 
+### Security & Identity
+- Vaultwarden (self-hosted Bitwarden) for password management
+  - Bitwarden clients cache the vault locally — passwords accessible offline even if server is down
+  - Deferred until infrastructure is stable enough to be trusted as a daily driver
+  - Keep critical passwords (email, vault master) in a separate offline backup regardless
+
+### DNS & Internal Routing
+- Vanity URLs / custom local DNS via Pi-hole (e.g. `jellyfin.home`, `immich.home`)
+- Reverse proxy (Nginx Proxy Manager or Caddy) to route by hostname without port numbers
+- Single domain for both internal and external access:
+  - Internal: Pi-hole DNS record → reverse proxy → service
+  - External: Cloudflare Tunnel → same reverse proxy → service
+
 ### Development & Self-Hosting
 - Linux VM for development and testing (when dedicated hardware arrives)
 - Self-hosted personal projects via Cloudflare Tunnel (no inbound ports, no static IP needed)
