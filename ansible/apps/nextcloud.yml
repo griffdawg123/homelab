@@ -13,7 +13,7 @@ values:
     db_user:        nextcloud
     redis_password: "{{ nextcloud_redis_password }}"
     # Set to your domain once configured, e.g. nextcloud.yourdomain.com
-    host: ""
+    host: "192.168.1.104"
     data_dir_path:  /var/www/html/data
     postgres_image_selector: postgres_18_image
     php_memory_limit:              512
@@ -22,10 +22,12 @@ values:
     op_cache_memory_consumption:   128
     op_cache_interned_strings_buffer: 32
     cron:
-      enabled: false
+      enabled: true
     imaginary:
       enabled: false
-    additional_envs: []
+    additional_envs:
+      - name: NEXTCLOUD_TRUSTED_DOMAINS
+        value: "localhost 192.168.1.104:30027 100.75.190.13:30027 truenas-scale:30027"
     apt_packages:    []
     tesseract_languages: []
 
