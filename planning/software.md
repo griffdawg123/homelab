@@ -34,6 +34,20 @@
 - Pi-hole — network-wide DNS ad-blocking (independent of NAS)
 - Potentially: GitHub Actions self-hosted runner
 
+## App Management Evolution
+
+Currently all apps run inside TrueNAS SCALE's ix-apps system (TrueNAS-managed Docker). This limits config
+management — no direct Compose files, no Portainer, runtime changes require `docker exec` workarounds.
+
+**When a second machine is available**, the preferred path is:
+- Move apps off TrueNAS onto a dedicated container host (mini PC or VM)
+- Use Portainer or plain Docker Compose for full config-as-code control
+- TrueNAS stays as pure storage (ZFS, SMB/NFS shares) — what it's best at
+- Ansible manages both: TrueNAS via REST API, container host via SSH + Docker Compose templates
+
+TrueNAS apps are fine for now (single machine, low complexity) but this is the direction once
+hardware allows it.
+
 ## Self-Hosted Projects (future, requires dedicated server)
 
 - Reverse proxy: Nginx Proxy Manager or Caddy

@@ -33,3 +33,5 @@
 - [ ] Linux dev VM
 - [ ] Self-hosted personal projects via Cloudflare Tunnel
 - [ ] Minecraft server
+- [ ] Migrate apps from TrueNAS ix-apps to dedicated container host (Portainer or Docker Compose)
+      — TrueNAS becomes pure storage, container host gets full config-as-code control via Ansible
