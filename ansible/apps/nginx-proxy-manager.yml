@@ -1,0 +1,47 @@
+---
+app_name: nginx-proxy-manager
+catalog_app: nginx-proxy-manager
+train: community
+
+values:
+  TZ: "Australia/Sydney"
+
+  network:
+    web_port:
+      bind_mode: published
+      host_ips: []
+      port_number: 30020  # admin UI
+    http_port:
+      bind_mode: published
+      host_ips: []
+      port_number: 30021  # HTTP (port 80 is reserved by TrueNAS)
+    https_port:
+      bind_mode: published
+      host_ips: []
+      port_number: 443  # HTTPS directly on 443 (TrueNAS UI is on 8443)
+    host_network: false
+    additional_ports: []
+    networks: []
+
+  npm:
+    additional_envs: []
+
+  storage:
+    data:
+      type: ix_volume
+      ix_volume_config:
+        acl_enable: false
+        dataset_name: data
+    certs:
+      type: ix_volume
+      ix_volume_config:
+        acl_enable: false
+        dataset_name: certs
+    additional_storage: []
+
+  resources:
+    limits:
+      cpus: 2
+      memory: 4096
+
+  labels: []

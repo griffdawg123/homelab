@@ -8,6 +8,7 @@
     body_format: json
     body:
       timezone: "{{ truenas_timezone }}"
+      ui_httpsport: "{{ truenas_ui_https_port }}"
     status_code: 200
 
 - name: Ensure NTP servers are configured

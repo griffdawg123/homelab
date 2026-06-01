@@ -22,3 +22,11 @@ nextcloud_admin_user:     "REPLACE_WITH_ADMIN_USERNAME"
 nextcloud_admin_password: "REPLACE_WITH_ADMIN_PASSWORD"
 nextcloud_db_password:    "REPLACE_WITH_DB_PASSWORD"
 nextcloud_redis_password: "REPLACE_WITH_REDIS_PASSWORD"
+
+# Cloudflare API token for DNS-01 challenge (wildcard cert issuance).
+# Create at dash.cloudflare.com > My Profile > API Tokens > Create Token.
+# Use the "Edit zone DNS" template, scoped to griffdawg.dev only.
+cloudflare_api_token: "REPLACE_WITH_CLOUDFLARE_API_TOKEN"
+
+# Pi-hole web admin password
+pihole_web_password: "REPLACE_WITH_PIHOLE_PASSWORD"

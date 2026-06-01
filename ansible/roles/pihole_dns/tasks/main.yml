@@ -1,0 +1,36 @@
+---
+- name: Authenticate to Pi-hole API
+  ansible.builtin.uri:
+    url: "http://{{ truenas_ip }}:{{ pihole_web_port | default(20720) }}/api/auth"
+    method: POST
+    body_format: json
+    body:
+      password: "{{ pihole_web_password }}"
+    status_code: 200
+  register: r_pihole_auth
+
+- name: Build desired hosts list
+  ansible.builtin.set_fact:
+    pihole_hosts_list: "{{ pihole_dns_entries | map(attribute='ip') | zip(pihole_dns_entries | map(attribute='name')) | map('join', ' ') | list }}"
+
+- name: Apply DNS hosts to Pi-hole config
+  ansible.builtin.uri:
+    url: "http://{{ truenas_ip }}:{{ pihole_web_port | default(20720) }}/api/config"
+    method: PATCH
+    headers:
+      X-FTL-SID: "{{ r_pihole_auth.json.session.sid }}"
+    body_format: json
+    body:
+      config:
+        dns:
+          hosts: "{{ pihole_hosts_list }}"
+    status_code: [200, 201, 204]
+
+- name: Logout of Pi-hole API
+  ansible.builtin.uri:
+    url: "http://{{ truenas_ip }}:{{ pihole_web_port | default(20720) }}/api/auth"
+    method: DELETE
+    headers:
+      X-FTL-SID: "{{ r_pihole_auth.json.session.sid }}"
+    status_code: [200, 204]
+  ignore_errors: true
