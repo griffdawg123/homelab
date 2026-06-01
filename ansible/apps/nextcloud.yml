@@ -12,8 +12,7 @@ values:
     db_password:    "{{ nextcloud_db_password }}"
     db_user:        nextcloud
     redis_password: "{{ nextcloud_redis_password }}"
-    # Set to your domain once configured, e.g. nextcloud.yourdomain.com
-    host: "192.168.1.104"
+    host: "nextcloud.griffdawg.dev"
     data_dir_path:  /var/www/html/data
     postgres_image_selector: postgres_18_image
     php_memory_limit:              512
@@ -27,7 +26,15 @@ values:
       enabled: false
     additional_envs:
       - name: NEXTCLOUD_TRUSTED_DOMAINS
-        value: "localhost 192.168.1.104:30027 100.75.190.13:30027 truenas-scale:30027"
+        value: "localhost 192.168.1.104:30027 100.75.190.13:30027 truenas-scale:30027 nextcloud.griffdawg.dev"
+      - name: OVERWRITEPROTOCOL
+        value: "https"
+      - name: OVERWRITEHOST
+        value: "nextcloud.griffdawg.dev"
+      - name: OVERWRITECLIURL
+        value: "https://nextcloud.griffdawg.dev"
+      - name: TRUSTED_PROXIES
+        value: "127.0.0.1 172.0.0.0/8 192.168.1.0/24"
     apt_packages:    []
     tesseract_languages: []
 

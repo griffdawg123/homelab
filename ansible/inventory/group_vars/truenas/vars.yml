@@ -2,6 +2,7 @@
 # TrueNAS SCALE connection
 # Replace with your TrueNAS IP or hostname.
 # Use https:// if you have a cert; set truenas_validate_certs: true if it's signed.
+truenas_ip: "192.168.1.104"
 truenas_api_url: "http://192.168.1.104/api/v2.0"
 truenas_validate_certs: false
 
@@ -28,6 +29,7 @@ truenas_ssh_keys:
   - username: "truenas_admin"
     pubkeys:
       - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIADnvd9MVxARpA+s6JNKeFtcAC6zxYcZ3aUQll+0sd+l doyle@DESKTOP-CPBAQEQ"
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAz6B4lZ27ux+3VwYQWr8Qfajgaeb3EwzMtC0uFVykom griffdawg@archlinux"
 
 # ---------------------------------------------------------------------------
 # Storage shares
@@ -62,4 +64,31 @@ truenas_users:
     smb: true
 
 immich_login_email: doylegriffin32@gmail.com
+
+# ---------------------------------------------------------------------------
+# Domain and reverse proxy
+# ---------------------------------------------------------------------------
+homelab_domain: "griffdawg.dev"
+truenas_tailscale_ip: "100.75.190.13"
+
+# TrueNAS web UI moves to 8443 so NPM can own port 443.
+truenas_ui_https_port: 8443
+
+# Pi-hole web UI port (published on host).
+pihole_web_port: 20720
+
+# Local DNS overrides applied to Pi-hole via the pihole_dns role (postconfig playbook).
+# All services resolve to the TrueNAS Tailscale IP so URLs work
+# identically at home and when connected via Tailscale remotely.
+pihole_dns_entries:
+  - name: "nextcloud.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
+  - name: "jellyfin.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
+  - name: "immich.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
+  - name: "pihole.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
+  - name: "truenas.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
 

@@ -1,0 +1,48 @@
+---
+app_name: pihole
+catalog_app: pihole
+train: stable
+
+values:
+  TZ: "Australia/Sydney"
+
+  network:
+    dns_port:
+      bind_mode: published
+      host_ips: []
+      port_number: 53
+    web_port:
+      bind_mode: published
+      host_ips: []
+      port_number: 20720
+    https_port:
+      bind_mode: ""
+      port_number: 30132
+    host_network: false
+    dns_opts: []
+    networks: []
+
+  pihole:
+    web_password: "{{ pihole_web_password }}"
+    shm_size_mb: 64
+    additional_envs: []
+
+  storage:
+    config:
+      type: ix_volume
+      ix_volume_config:
+        acl_enable: false
+        dataset_name: config
+    dnsmasq:
+      type: ix_volume
+      ix_volume_config:
+        acl_enable: false
+        dataset_name: dnsmasq
+    additional_storage: []
+
+  resources:
+    limits:
+      cpus: 2
+      memory: 4096
+
+  labels: []

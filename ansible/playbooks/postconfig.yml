@@ -1,0 +1,7 @@
+---
+- name: Post-deployment configuration
+  hosts: truenas
+  gather_facts: false
+  roles:
+    - nextcloud_config
+    - pihole_dns
