@@ -1,0 +1,15 @@
+---
+app_name: japan
+type: custom
+
+compose:
+  services:
+    japan:
+      container_name: japan
+      image: nginx:alpine
+      restart: unless-stopped
+      network_mode: bridge
+      ports:
+        - "30030:80/tcp"
+      volumes:
+        - /mnt/stowage/japan:/usr/share/nginx/html:ro
