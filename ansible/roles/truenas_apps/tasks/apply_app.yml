@@ -29,8 +29,9 @@
     validate_certs: "{{ truenas_validate_certs }}"
     body_format: json
     body:
-      app_name:             "{{ app.app_name }}"
-      custom_compose_config: "{{ app.compose }}"
+      app_name: "{{ app.app_name }}"
+      custom_app: true
+      custom_compose_config_string: "{{ app.compose | to_yaml }}"
     status_code: [200, 202]
   when:
     - app.type | default('catalog') == 'custom'

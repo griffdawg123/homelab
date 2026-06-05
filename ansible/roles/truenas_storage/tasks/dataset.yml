@@ -28,3 +28,35 @@
   loop_control:
     label: "{{ item.share.dataset }}"
   when: item.status == 404
+
+- name: Fetch TrueNAS users for dataset ownership
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/user"
+    method: GET
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+  register: truenas_users_list
+  when: truenas_shares | selectattr('owner', 'defined') | list | length > 0
+
+- name: Set ownership on datasets with owner defined
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/filesystem/setperm"
+    method: POST
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+    body_format: json
+    body:
+      path: "/mnt/{{ share.dataset }}"
+      uid: "{{ (truenas_users_list.json | selectattr('username', 'equalto', share.owner) | first).uid | int }}"
+      gid: "{{ (truenas_users_list.json | selectattr('username', 'equalto', share.owner) | first).group.bsdgrp_gid | int }}"
+      mode: "755"
+      options:
+        stripacl: false
+        recursive: false
+        traverse: false
+    status_code: [200, 202]
+  loop: "{{ truenas_shares | selectattr('owner', 'defined') | list }}"
+  loop_control:
+    loop_var: share
+    label: "{{ share.dataset }}"
+  when: truenas_users_list is defined

@@ -61,6 +61,7 @@ For each service, add a proxy host in NPM pointing to the backend. Use the `*.gr
 | `jellyfin.griffdawg.dev` | `http://192.168.1.104:8096` | |
 | `pihole.griffdawg.dev` | `http://192.168.1.104:20720` | |
 | `truenas.griffdawg.dev` | `https://192.168.1.104:8443` | Enable "Ignore SSL Certificate" |
+| `japan.griffdawg.dev` | `http://192.168.1.104:30030` | |
 
 ### Tailscale DNS
 In the Tailscale admin console (tailscale.com/admin/dns):
@@ -99,6 +100,10 @@ values:
 The `truenas_apps` role picks up all files in `ansible/apps/` automatically — no other changes needed.
 
 **Note:** TrueNAS custom apps (type: custom) do not support `dockerfile_inline` or `configs:` with inline `content:`. Use pre-built images from a registry instead.
+
+**Custom app API requirements:** `custom_app: true` must be set and the compose config must be sent as a YAML string via `custom_compose_config_string` (not a dict via `custom_compose_config`). The role handles this automatically via `| to_yaml`.
+
+**API deprecation:** `/api/v2.0` is deprecated in 25.04 and removed in TrueNAS 26. Future migration path is JSON-RPC 2.0 over WebSocket at `wss://<host>/api/current`.
 
 ## Adding secrets
 
