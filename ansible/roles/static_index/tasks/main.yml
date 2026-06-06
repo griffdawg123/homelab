@@ -1,19 +1,9 @@
 ---
-- name: Write index generator script
-  ansible.builtin.uri:
-    url: "{{ truenas_api_url }}/filesystem/put"
-    method: POST
-    headers:
-      Authorization: "Bearer {{ truenas_api_key }}"
-    body_format: form-multipart
-    body:
-      data: '{"path": "/root/gen-static-index.sh", "options": {"mode": "0755"}}'
-      file:
-        content: "{{ lookup('file', 'gen-static-index.sh') }}"
-        filename: gen-static-index.sh
-        mime_type: text/plain
-    validate_certs: "{{ truenas_validate_certs }}"
-    status_code: [200, 201]
+- name: Write index generator script to stowage-share
+  ansible.builtin.copy:
+    src: gen-static-index.sh
+    dest: "{{ lookup('env', 'HOME') }}/stowage-share/gen-static-index.sh"
+    mode: "0755"
 
 - name: Fetch existing cron jobs
   ansible.builtin.uri:
@@ -31,7 +21,7 @@
     body_format: json
     body:
       user: "root"
-      command: "/root/gen-static-index.sh"
+      command: "sh /mnt/stowage/stowage-share/gen-static-index.sh"
       description: "Regenerate static.griffdawg.dev index"
       schedule:
         minute: "*/5"
@@ -43,4 +33,4 @@
       stdout: true
       stderr: true
     status_code: [200, 201]
-  when: r_cronjobs.json | selectattr('command', 'equalto', '/root/gen-static-index.sh') | list | length == 0
+  when: r_cronjobs.json | selectattr('command', 'equalto', 'sh /mnt/stowage/stowage-share/gen-static-index.sh') | list | length == 0

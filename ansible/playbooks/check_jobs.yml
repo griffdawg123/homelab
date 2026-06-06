@@ -1,0 +1,27 @@
+---
+- name: Check TrueNAS job failures
+  hosts: truenas
+  gather_facts: false
+  tasks:
+    - name: Fetch failed jobs
+      ansible.builtin.uri:
+        url: "{{ truenas_api_url }}/core/get_jobs?filters=[[\"state\",\"=\",\"FAILED\"]]"
+        headers: "{{ truenas_api_headers }}"
+        validate_certs: "{{ truenas_validate_certs }}"
+      register: r_jobs
+
+    - name: Report failed jobs
+      ansible.builtin.debug:
+        msg: |
+          ID:     {{ item.id }}
+          Method: {{ item.method }}
+          Error:  {{ item.error }}
+      loop: "{{ r_jobs.json }}"
+      loop_control:
+        label: "{{ item.id }}"
+      when: r_jobs.json | length > 0
+
+    - name: No failures found
+      ansible.builtin.debug:
+        msg: "No failed jobs."
+      when: r_jobs.json | length == 0
