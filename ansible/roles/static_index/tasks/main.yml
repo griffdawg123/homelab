@@ -1,0 +1,46 @@
+---
+- name: Write index generator script
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/filesystem/put"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+    body_format: form-multipart
+    body:
+      data: '{"path": "/root/gen-static-index.sh", "options": {"mode": "0755"}}'
+      file:
+        content: "{{ lookup('file', 'gen-static-index.sh') }}"
+        filename: gen-static-index.sh
+        mime_type: text/plain
+    validate_certs: "{{ truenas_validate_certs }}"
+    status_code: [200, 201]
+
+- name: Fetch existing cron jobs
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/cronjob"
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+  register: r_cronjobs
+
+- name: Create static index cron job
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/cronjob"
+    method: POST
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+    body_format: json
+    body:
+      user: "root"
+      command: "/root/gen-static-index.sh"
+      description: "Regenerate static.griffdawg.dev index"
+      schedule:
+        minute: "*/5"
+        hour: "*"
+        dom: "*"
+        month: "*"
+        dow: "*"
+      enabled: true
+      stdout: true
+      stderr: true
+    status_code: [200, 201]
+  when: r_cronjobs.json | selectattr('command', 'equalto', '/root/gen-static-index.sh') | list | length == 0

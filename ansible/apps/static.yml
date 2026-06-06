@@ -1,0 +1,16 @@
+---
+app_name: static
+type: custom
+
+compose:
+  services:
+    static:
+      container_name: static
+      image: nginxinc/nginx-unprivileged
+      user: "568:568"
+      restart: unless-stopped
+      network_mode: bridge
+      ports:
+        - "30030:8080/tcp"
+      volumes:
+        - /mnt/stowage/stowage-share/static:/usr/share/nginx/html:ro

@@ -5,3 +5,4 @@
   roles:
     - nextcloud_config
     - pihole_dns
+    - static_index
