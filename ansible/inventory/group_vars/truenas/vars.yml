@@ -38,8 +38,6 @@ truenas_ssh_keys:
 # Datasets that already exist are left untouched — no data will be modified.
 # ---------------------------------------------------------------------------
 truenas_shares:
-  - dataset: "stowage/japan"
-    owner: "truenas_admin"
   - dataset: "stowage/nextcloud"
   - dataset: "stowage/nextcloud/html"
   - dataset: "stowage/nextcloud/data"
@@ -93,6 +91,6 @@ pihole_dns_entries:
     ip: "{{ truenas_tailscale_ip }}"
   - name: "truenas.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
-  - name: "japan.{{ homelab_domain }}"
+  - name: "static.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
 

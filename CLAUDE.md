@@ -24,7 +24,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 | Pi-hole | 53 (DNS), 20720 (web) | `pihole.griffdawg.dev` |
 | Nginx Proxy Manager | 443 (HTTPS), 30020 (admin UI) | reverse proxy for all of the above |
 | Tailscale | — | provides remote access via `100.75.190.13` |
-| Japan trip page | 30030 | `japan.griffdawg.dev` |
+| Static file server | 30030 | `static.griffdawg.dev` |
 
 ## Key files
 
@@ -72,7 +72,7 @@ Add a proxy host per service using the wildcard cert. Enable Force SSL + HTTP/2.
 | `jellyfin.griffdawg.dev` | `http://192.168.1.104:8096` | |
 | `pihole.griffdawg.dev` | `http://192.168.1.104:20720` | |
 | `truenas.griffdawg.dev` | `https://192.168.1.104:8443` | Ignore SSL cert (self-signed) |
-| `japan.griffdawg.dev` | `http://192.168.1.104:30030` | |
+| `static.griffdawg.dev` | `http://192.168.1.104:30030` | |
 
 ### 5. Tailscale DNS (one-time, manual)
 In tailscale.com admin → **DNS → Add nameserver → Custom → `100.75.190.13`**

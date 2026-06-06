@@ -31,8 +31,22 @@
     body:
       app_name: "{{ app.app_name }}"
       custom_app: true
-      custom_compose_config_string: "{{ app.compose | to_yaml }}"
+      custom_compose_config_string: "{{ app.compose | to_yaml(width=10000) }}"
     status_code: [200, 202]
   when:
     - app.type | default('catalog') == 'custom'
     - installed_apps | selectattr('name', 'equalto', app.app_name) | list | length == 0
+
+- name: "Update custom app: {{ app.app_name }} (if already present)"
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/app/id/{{ app.app_name }}"
+    method: PUT
+    headers: "{{ truenas_api_headers }}"
+    validate_certs: "{{ truenas_validate_certs }}"
+    body_format: json
+    body:
+      custom_compose_config_string: "{{ app.compose | to_yaml(width=10000) }}"
+    status_code: [200, 202]
+  when:
+    - app.type | default('catalog') == 'custom'
+    - installed_apps | selectattr('name', 'equalto', app.app_name) | list | length > 0
