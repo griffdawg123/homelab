@@ -51,7 +51,7 @@
       gid: "{{ (truenas_users_list.json | selectattr('username', 'equalto', share.owner) | first).group.bsdgrp_gid | int }}"
       mode: "755"
       options:
-        stripacl: false
+        stripacl: true
         recursive: false
         traverse: false
     status_code: [200, 202]

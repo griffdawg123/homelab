@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 STATIC=/mnt/stowage/stowage-share/static
 TMP="$STATIC/index.html.tmp"
 UPDATED=$(date '+%d %b %Y, %H:%M')

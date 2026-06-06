@@ -13,7 +13,7 @@
     body:
       data: >-
         {"path": "/mnt/stowage/nextcloud/html/config/custom.config.php",
-         "options": {"mode": "0644", "uid": 33, "gid": 33}}
+         "options": {"mode": 420}}
       file:
         content: "{{ lookup('template', 'nextcloud_custom.config.php.j2') }}"
         filename: custom.config.php
