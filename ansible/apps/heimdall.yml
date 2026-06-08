@@ -9,7 +9,6 @@ compose:
       image: lscr.io/linuxserver/heimdall:latest
       restart: unless-stopped
       network_mode: bridge
-      user: "568:568"
       ports:
         - "30025:80/tcp"
       environment:
