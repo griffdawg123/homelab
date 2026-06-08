@@ -13,6 +13,9 @@ truenas_user_passwords:
 immich_db_password:    "REPLACE_WITH_DB_PASSWORD"
 immich_redis_password: "REPLACE_WITH_REDIS_PASSWORD"
 
+# Immich API key — generate in Immich web UI: Account Settings > API Keys
+immich_api_key: "REPLACE_WITH_IMMICH_API_KEY"
+
 # Tailscale auth key — generate at tailscale.com/admin/settings/keys
 # auth_once: true means this is only used on first install; state persists in ix_volume after that
 tailscale_auth_key: "REPLACE_WITH_AUTH_KEY"
