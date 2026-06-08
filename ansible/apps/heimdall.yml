@@ -1,0 +1,21 @@
+---
+app_name: heimdall
+type: custom
+
+compose:
+  services:
+    heimdall:
+      container_name: heimdall
+      image: lscr.io/linuxserver/heimdall:latest
+      restart: unless-stopped
+      network_mode: bridge
+      user: "568:568"
+      ports:
+        - "30025:80/tcp"
+      environment:
+        - TZ=Australia/Sydney
+        - PUID=568
+        - PGID=568
+        - ALLOW_INTERNAL_REQUESTS=true
+      volumes:
+        - /mnt/stowage/heimdall/config:/config:rw
