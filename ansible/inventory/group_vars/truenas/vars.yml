@@ -41,7 +41,6 @@ truenas_shares:
   - dataset: "stowage/nextcloud"
   - dataset: "stowage/nextcloud/html"
   - dataset: "stowage/nextcloud/data"
-  - dataset: "stowage/heimdall"
   - dataset: "stowage/stowage-share"
     smb:
       enabled: true
