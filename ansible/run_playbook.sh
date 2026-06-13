@@ -21,4 +21,4 @@ if [[ ! -f "playbooks/$playbook.yml" ]]; then
   exit 1
 fi
 
-ansible-playbook "playbooks/$playbook.yml" --ask-vault-pass
+ansible-playbook "playbooks/$playbook.yml" --ask-vault-pass "${@:2}"

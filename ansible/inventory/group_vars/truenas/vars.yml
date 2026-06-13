@@ -64,6 +64,8 @@ truenas_users:
     smb: true
 
 immich_login_email: doylegriffin32@gmail.com
+immich_server_url: "http://192.168.1.104:30041"
+# immich_api_key is stored in vault.yml
 
 # ---------------------------------------------------------------------------
 # Domain and reverse proxy
