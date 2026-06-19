@@ -6,3 +6,4 @@
     - nextcloud_config
     - pihole_dns
     - static_index
+    - couchdb_config

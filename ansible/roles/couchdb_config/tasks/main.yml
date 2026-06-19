@@ -1,0 +1,62 @@
+---
+# cors.ini provides persistence across container rebuilds (read on startup).
+# The CouchDB config API applies each setting to the live instance immediately,
+# so no container restart is needed.
+
+- name: Write CouchDB CORS config
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/filesystem/put"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+    body_format: form-multipart
+    body:
+      data: >-
+        {"path": "/mnt/stowage/couchdb/config/cors.ini",
+         "options": {"mode": 420}}
+      file:
+        content: "{{ lookup('template', 'couchdb_cors.ini.j2') }}"
+        filename: cors.ini
+        mime_type: text/plain
+    validate_certs: "{{ truenas_validate_certs }}"
+    status_code: [200, 201]
+
+- name: Finalize CouchDB single-node setup
+  ansible.builtin.uri:
+    url: "http://{{ truenas_ip }}:30050/_cluster_setup"
+    method: POST
+    url_username: "{{ couchdb_admin_user }}"
+    url_password: "{{ couchdb_admin_password }}"
+    force_basic_auth: true
+    body:
+      action: enable_single_node
+      username: "{{ couchdb_admin_user }}"
+      password: "{{ couchdb_admin_password }}"
+      bind_address: "0.0.0.0"
+      port: 5984
+      singlenode: true
+    body_format: json
+    headers:
+      Content-Type: application/json
+    status_code: [201, 400]
+
+- name: Apply CouchDB settings via config API
+  ansible.builtin.uri:
+    url: "http://{{ truenas_ip }}:30050/_node/nonode@nohost/_config/{{ item.section }}/{{ item.key }}"
+    method: PUT
+    url_username: "{{ couchdb_admin_user }}"
+    url_password: "{{ couchdb_admin_password }}"
+    force_basic_auth: true
+    body: '"{{ item.value }}"'
+    headers:
+      Content-Type: application/json
+    status_code: [200, 201]
+  loop:
+    - { section: couchdb,  key: single_node,  value: "true" }
+    - { section: httpd,    key: enable_cors,  value: "true" }
+    - { section: cors,     key: origins,      value: "app://obsidian.md,capacitor://localhost,http://localhost" }
+    - { section: cors,     key: credentials,  value: "true" }
+    - { section: cors,     key: methods,      value: "GET,PUT,POST,HEAD,DELETE" }
+    - { section: cors,     key: headers,      value: "accept, authorization, content-type, origin, referer" }
+  loop_control:
+    label: "{{ item.section }}/{{ item.key }}"

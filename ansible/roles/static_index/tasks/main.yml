@@ -1,9 +1,15 @@
 ---
+- name: Check if stowage-share is mounted
+  ansible.builtin.stat:
+    path: "{{ lookup('env', 'HOME') }}/stowage-share"
+  register: r_stowage_share
+
 - name: Write index generator script to stowage-share
   ansible.builtin.copy:
     src: gen-static-index.sh
     dest: "{{ lookup('env', 'HOME') }}/stowage-share/gen-static-index.sh"
     mode: "0755"
+  when: r_stowage_share.stat.exists
 
 - name: Fetch existing cron jobs
   ansible.builtin.uri:
@@ -33,4 +39,6 @@
       stdout: true
       stderr: true
     status_code: [200, 201]
-  when: r_cronjobs.json | selectattr('command', 'equalto', 'sh /mnt/stowage/stowage-share/gen-static-index.sh') | list | length == 0
+  when:
+    - r_stowage_share.stat.exists
+    - r_cronjobs.json | selectattr('command', 'equalto', 'sh /mnt/stowage/stowage-share/gen-static-index.sh') | list | length == 0
