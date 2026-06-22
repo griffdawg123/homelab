@@ -25,6 +25,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 | Nginx Proxy Manager | 443 (HTTPS), 30020 (admin UI) | reverse proxy for all of the above |
 | Tailscale | — | provides remote access via `100.75.190.13` |
 | Static file server | 30030 | `static.griffdawg.dev` |
+| CouchDB (Obsidian LiveSync) | 30050 | `couchdb.griffdawg.dev` |
 | Heimdall | 30025 | `homelab.griffdawg.dev` |
 
 ## Key files

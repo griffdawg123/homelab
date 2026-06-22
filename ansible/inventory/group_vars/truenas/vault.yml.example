@@ -33,3 +33,7 @@ cloudflare_api_token: "REPLACE_WITH_CLOUDFLARE_API_TOKEN"
 
 # Pi-hole web admin password
 pihole_web_password: "REPLACE_WITH_PIHOLE_PASSWORD"
+
+# CouchDB admin credentials for Obsidian LiveSync
+couchdb_admin_user:     "REPLACE_WITH_COUCHDB_USERNAME"
+couchdb_admin_password: "REPLACE_WITH_COUCHDB_PASSWORD"

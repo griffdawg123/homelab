@@ -41,6 +41,9 @@ truenas_shares:
   - dataset: "stowage/nextcloud"
   - dataset: "stowage/nextcloud/html"
   - dataset: "stowage/nextcloud/data"
+  - dataset: "stowage/couchdb"
+  - dataset: "stowage/couchdb/data"
+  - dataset: "stowage/couchdb/config"
   - dataset: "stowage/stowage-share"
     smb:
       enabled: true
@@ -94,6 +97,8 @@ pihole_dns_entries:
   - name: "truenas.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
   - name: "static.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
+  - name: "couchdb.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
   - name: "homelab.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
