@@ -100,4 +100,6 @@ pihole_dns_entries:
     ip: "{{ truenas_tailscale_ip }}"
   - name: "couchdb.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
+  - name: "homelab.{{ homelab_domain }}"
+    ip: "{{ truenas_tailscale_ip }}"
 
