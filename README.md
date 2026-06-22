@@ -59,11 +59,49 @@ cd ansible
 
 Apps are defined as individual YAML files in `ansible/apps/`. Adding a new file and running `./run_playbook.sh apps` is all that's needed to deploy it.
 
-| App | Type | Dataset |
-|---|---|---|
-| Immich | Catalog (community) | `stowage/immich` |
-| Jellyfin | Custom Docker Compose | `stowage/jellyfin` |
-| Tailscale | Catalog (community) | — (ix_volume for state) |
+| App | Type | Port | Dataset |
+|---|---|---|---|
+| Heimdall | Custom Docker Compose | 30025 | `stowage/heimdall` (plain dir) |
+| Immich | Catalog (community) | 30041 | `stowage/immich` |
+| Jellyfin | Custom Docker Compose | 8096 | `stowage/jellyfin` |
+| Nextcloud | Catalog (community) | 30027 | `stowage/nextcloud` |
+| Nginx Proxy Manager | Custom Docker Compose | 443, 30020 | — |
+| Pi-hole | Catalog (community) | 53, 20720 | — (ix_volume) |
+| Static file server | Custom Docker Compose | 30030 | `stowage/stowage-share/static` |
+| Tailscale | Catalog (community) | — | — (ix_volume for state) |
+
+## Heimdall
+
+Heimdall is the homelab dashboard, available at `homelab.griffdawg.dev`. Configuration is UI-only (stored in SQLite) — there is no declarative config format.
+
+### Enhanced app tiles
+
+The following services support live stats directly on their tiles. Set each one up at `homelab.griffdawg.dev` → *Add Application* → search for the service name → select the Enhanced type.
+
+| Service | URL to enter | Credential needed | Where to get it |
+|---|---|---|---|
+| Pi-hole | `http://192.168.1.104:20720` | API token | Pi-hole web UI → Settings → API |
+| Immich | `http://192.168.1.104:30041` | API key | Immich → Account Settings → API Keys |
+| Jellyfin | `http://192.168.1.104:8096` | API key | Jellyfin → Dashboard → API Keys → + |
+| Nextcloud | `http://192.168.1.104:30027` | Admin user + password | `nextcloud_admin_*` in vault |
+| Nginx Proxy Manager | `http://192.168.1.104:30020` | Admin email + password | NPM web UI credentials |
+
+TrueNAS (`https://192.168.1.104:8443`) has no enhanced app — add it as a plain link.
+
+### Backup and restore
+
+Heimdall config does not survive a volume wipe without a backup. After finishing tile setup, export a snapshot:
+
+**Export:** `homelab.griffdawg.dev` → Settings (top-right) → *Export* → save the `.tar.gz`
+
+Commit the file to this repo:
+```bash
+cp ~/Downloads/heimdall-export-*.tar.gz ansible/heimdall-backup.tar.gz
+git add ansible/heimdall-backup.tar.gz
+git commit -m "Update Heimdall config backup"
+```
+
+**Restore:** `homelab.griffdawg.dev` → Settings → *Import* → select the `.tar.gz`
 
 ### Structure
 
