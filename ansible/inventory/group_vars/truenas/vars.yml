@@ -100,6 +100,11 @@ grafana_cloud_prom_user: "3333432"           # numeric instance id
 grafana_cloud_loki_url:  "https://logs-prod-026.grafana.net/loki/api/v1/push"           # e.g. https://logs-prod-XX.grafana.net/loki/api/v1/push
 grafana_cloud_loki_user: "1662391"           # numeric instance id
 
+# Tailnet IP of the off-site monitoring droplet (homelab-monitor). Caddy on the
+# droplet terminates TLS for kuma.griffdawg.dev here. Update if the droplet is
+# recreated (Tailscale assigns a new IP).
+monitor_tailscale_ip:    "100.84.249.45"
+
 pihole_dns_entries:
   - name: "nextcloud.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
@@ -116,5 +121,5 @@ pihole_dns_entries:
   - name: "homelab.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"
   - name: "kuma.{{ homelab_domain }}"
-    ip: "{{ truenas_tailscale_ip }}"
+    ip: "{{ monitor_tailscale_ip }}"
 

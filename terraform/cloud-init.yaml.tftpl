@@ -34,10 +34,50 @@ write_files:
             - ntfy-cache:/var/cache/ntfy
             - ntfy-etc:/etc/ntfy
 
+        caddy:
+          build:
+            context: ./caddy
+          container_name: caddy
+          restart: unless-stopped
+          ports:
+            - "80:80"
+            - "443:443"
+          environment:
+            - CLOUDFLARE_API_TOKEN=${cloudflare_api_token}
+          volumes:
+            - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+            - caddy-data:/data
+            - caddy-config:/config
+          depends_on:
+            - uptime-kuma
+
       volumes:
         uptime-kuma:
         ntfy-cache:
         ntfy-etc:
+        caddy-data:
+        caddy-config:
+
+  - path: /opt/monitoring/caddy/Dockerfile
+    permissions: "0644"
+    content: |
+      # Caddy built with the Cloudflare DNS module for DNS-01 cert issuance
+      FROM caddy:2-builder AS builder
+      RUN xcaddy build --with github.com/caddy-dns/cloudflare
+      FROM caddy:2
+      COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+
+  - path: /opt/monitoring/caddy/Caddyfile
+    permissions: "0644"
+    content: |
+      # Terminates TLS for kuma.griffdawg.dev (cert via Cloudflare DNS-01) and
+      # reverse-proxies to the Uptime Kuma container on the compose network.
+      kuma.griffdawg.dev {
+        tls {
+          dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+        reverse_proxy uptime-kuma:3001
+      }
 
 runcmd:
   # Docker (convenience script also installs the compose plugin)
@@ -45,5 +85,5 @@ runcmd:
   # Tailscale - joins the tailnet so the apps are reachable privately
   - curl -fsSL https://tailscale.com/install.sh | sh
   - tailscale up --authkey=${tailscale_auth_key} --hostname=${tailscale_hostname} --ssh
-  # Bring up the stack
-  - cd /opt/monitoring && docker compose up -d
+  # Bring up the stack (build the custom Caddy image with the Cloudflare DNS module)
+  - cd /opt/monitoring && docker compose up -d --build

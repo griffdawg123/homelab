@@ -27,7 +27,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 | Static file server | 30030 | `static.griffdawg.dev` |
 | Heimdall | 30025 | `homelab.griffdawg.dev` |
 | Grafana Alloy | 12345 (host, internal) | observability agent → Grafana Cloud |
-| Uptime Kuma / ntfy | 3001 / 8080 (off-site DO droplet) | `kuma.griffdawg.dev`; external up/down checks + push paging |
+| Uptime Kuma / ntfy | 3001 / 8080, Caddy on 443 (off-site DO droplet) | `https://kuma.griffdawg.dev` (Caddy + Cloudflare DNS-01); external up/down checks + push paging |
 
 ## Key files
 
@@ -78,11 +78,25 @@ Add a proxy host per service using the wildcard cert. Enable Force SSL + HTTP/2.
 | `truenas.griffdawg.dev` | `https://192.168.1.104:8443` | Ignore SSL cert (self-signed) |
 | `static.griffdawg.dev` | `http://192.168.1.104:30030` | |
 | `homelab.griffdawg.dev` | `http://192.168.1.104:30025` | |
-| `kuma.griffdawg.dev` | `http://100.84.249.45:3001` | Uptime Kuma on the DO droplet, reached over Tailscale (tailnet IP) |
+
+> **`kuma.griffdawg.dev` is NOT an NPM proxy host.** NPM runs in a Docker container on TrueNAS with no route to the tailnet, so it cannot reach the off-site droplet. Uptime Kuma is fronted by **Caddy on the droplet itself** (TLS via Cloudflare DNS-01); Pi-hole resolves `kuma.griffdawg.dev` to the droplet's tailnet IP (`monitor_tailscale_ip` in `vars.yml`).
 
 ### 5. Tailscale DNS (one-time, manual)
 In tailscale.com admin → **DNS → Add nameserver → Custom → `100.75.190.13`**
 Enable **Override local DNS**.
+
+## After changing DNS or proxy hosts
+
+After editing `pihole_dns_entries` (then running `postconfig`) or adding/changing an NPM proxy host, **a new name can fail to resolve on clients even though Pi-hole is serving it correctly** — clients cache the old `NXDOMAIN` (negative cache) until its TTL expires. Verify with `dig @192.168.1.104 <name>` (queries Pi-hole directly); if that works but the browser/`curl` doesn't, it's a stale client cache. Flush it:
+
+```bash
+sudo resolvectl flush-caches          # systemd-resolved
+sudo systemctl restart tailscaled     # Tailscale MagicDNS, if the client resolves via 100.100.100.100
+```
+
+Browsers cache DNS separately: Firefox/Zen `about:networking#dns` → **Clear DNS Cache** (and confirm **Secure DNS/DoH is off**, or the browser bypasses Pi-hole entirely and no local name will ever resolve); Chrome `chrome://net-internals/#dns`.
+
+Don't pin Pi-hole as a client's *sole* DNS server — keep the router/public resolver as a fallback so losing Pi-hole only drops `*.griffdawg.dev`, not all DNS.
 
 ## What NOT to do
 
