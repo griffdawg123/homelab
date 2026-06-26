@@ -27,6 +27,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 | Static file server | 30030 | `static.griffdawg.dev` |
 | Heimdall | 30025 | `homelab.griffdawg.dev` |
 | Grafana Alloy | 12345 (host, internal) | observability agent → Grafana Cloud |
+| Uptime Kuma / ntfy | 3001 / 8080 (off-site DO droplet) | `kuma.griffdawg.dev`; external up/down checks + push paging |
 
 ## Key files
 
@@ -77,6 +78,7 @@ Add a proxy host per service using the wildcard cert. Enable Force SSL + HTTP/2.
 | `truenas.griffdawg.dev` | `https://192.168.1.104:8443` | Ignore SSL cert (self-signed) |
 | `static.griffdawg.dev` | `http://192.168.1.104:30030` | |
 | `homelab.griffdawg.dev` | `http://192.168.1.104:30025` | |
+| `kuma.griffdawg.dev` | `http://100.84.249.45:3001` | Uptime Kuma on the DO droplet, reached over Tailscale (tailnet IP) |
 
 ### 5. Tailscale DNS (one-time, manual)
 In tailscale.com admin → **DNS → Add nameserver → Custom → `100.75.190.13`**
