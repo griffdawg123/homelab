@@ -7,3 +7,4 @@
     - pihole_dns
     - static_index
     - alloy_config
+    - couchdb_config

@@ -67,6 +67,7 @@ For each service, add a proxy host in NPM pointing to the backend. Use the `*.gr
 | `pihole.griffdawg.dev` | `http://192.168.1.104:20720` | |
 | `truenas.griffdawg.dev` | `https://192.168.1.104:8443` | Enable "Ignore SSL Certificate" |
 | `japan.griffdawg.dev` | `http://192.168.1.104:30030` | |
+| `couchdb.griffdawg.dev` | `http://192.168.1.104:30050` | |
 
 ### Tailscale DNS
 In the Tailscale admin console (tailscale.com/admin/dns):
