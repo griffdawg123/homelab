@@ -10,10 +10,20 @@ Ansible manages TrueNAS SCALE via the REST API. All config is version-controlled
 - `apps` playbook — installs and verifies all apps (one file per app in `ansible/apps/`)
 - `facts` playbook — read-only snapshot of current state
 
-## Infrastructure as Code — Terraform (planned)
+## Infrastructure as Code — Terraform (in place)
 
-- Provisioning TrueNAS datasets
-- Future: provisioning VMs on Proxmox when dedicated hardware exists
+- `terraform/` provisions an off-site DigitalOcean droplet (`homelab-monitor`)
+  running Uptime Kuma + ntfy, joined to the tailnet via cloud-init. This hosts the
+  part of the observability stack that must survive the homelab going down.
+- Future: provisioning TrueNAS datasets; VMs on Proxmox when dedicated hardware exists.
+
+## Observability (in place)
+
+- **Grafana Alloy** agent on TrueNAS (`ansible/apps/alloy.yml`) ships system +
+  container metrics and logs to **Grafana Cloud** (free tier) for dashboards and
+  alerting — keeps the heavy control plane off the 8 GB NAS.
+- **Uptime Kuma** (on the DO droplet) does external up/down checks; **ntfy** pages
+  the phone. Both off-site so they alert even when home is down.
 
 ## GitOps — GitHub Actions (planned)
 

@@ -4,7 +4,7 @@ Context and conventions for AI agents working in this repository.
 
 ## What this repo is
 
-Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fangtooth). Ansible manages TrueNAS configuration via its REST API. Terraform is planned but not yet present.
+Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fangtooth). Ansible manages TrueNAS configuration via its REST API, and also configures an off-site DigitalOcean monitoring droplet over SSH (the `monitor` inventory group). Terraform (`terraform/`, state in Terraform Cloud) provisions that droplet but only **bootstraps** it (Docker + Tailscale + tailnet join); the `monitor_stack` Ansible role then deploys its compose stack (Uptime Kuma + ntfy + Caddy). Observability: a **Grafana Alloy** agent on TrueNAS ships metrics + logs to **Grafana Cloud**, and the droplet provides external up/down checks + push paging that survive a full homelab outage.
 
 ## Key facts
 
@@ -32,13 +32,18 @@ Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fang
 settings   → moves TrueNAS HTTPS to port 8443, system config, NTP, SSH keys
 storage    → creates ZFS datasets
 users      → local user accounts
-apps       → deploys all apps in ansible/apps/ via TrueNAS API
-postconfig → writes Nextcloud custom.config.php (trusted domains/proxies), applies Pi-hole DNS entries
+apps       → deploys all apps in ansible/apps/ via TrueNAS API (incl. Grafana Alloy)
+postconfig → Nextcloud custom.config.php, Pi-hole DNS entries, static index, Grafana Alloy config
 ```
 
 Run from `ansible/`:
 ```bash
 ./run_playbook.sh <playbook>
+```
+
+The `monitor` playbook is **separate** — it targets the off-site droplet over SSH (not the TrueNAS API), so it isn't part of the TrueNAS chain above:
+```
+monitor    → deploys the droplet compose stack (Uptime Kuma + ntfy + Caddy) via the monitor_stack role
 ```
 
 ## Manual steps (not automated by Ansible)
@@ -77,6 +82,14 @@ This makes all Tailscale devices use Pi-hole for DNS, so `*.griffdawg.dev` resol
 - **Pi-hole** runs as a TrueNAS catalog app (`ansible/apps/pihole.yml`). DNS port 53 published on host. DNS entries managed via `pihole_dns_entries` in `vars.yml`, applied by the `pihole_dns` role (`postconfig` playbook). Config stored in Pi-hole v6 TOML format at `/mnt/.ix-apps/app_mounts/pihole/config/pihole.toml`.
 - All service subdomains resolve to `100.75.190.13` (Tailscale IP) so URLs work identically at home and over Tailscale.
 - Non-Tailscale LAN devices (Roku, smart TVs etc.) use direct IP:port — they cannot use custom domains unless the router is configured to use Pi-hole as its DNS server.
+
+## Monitoring droplet (off-site)
+
+- **Provisioned** by `terraform/` (DigitalOcean, state in Terraform Cloud). cloud-init **only** installs Docker + Tailscale and joins the tailnet — keep `cloud-init.yaml.tftpl` **ASCII-only** (an em-dash in a comment once broke the cloud-config parse and silently skipped all `runcmd`).
+- **Configured** by the `monitor_stack` role over SSH (`monitor` group, host `homelab-monitor`, connects via `~/.ssh/homelab-monitor` to the droplet's **public IP** — the tailnet IP routes through Tailscale SSH, which needs interactive auth). The role templates `docker-compose.yml` (Uptime Kuma + ntfy + Caddy), the Caddyfile, and a `0600` `.env`. After a rebuild, update `ansible_host` (group_vars/monitor) and `monitor_tailscale_ip` (truenas vars) — both IPs change.
+- **Caddy** terminates TLS for `kuma.griffdawg.dev` via Cloudflare DNS-01. NPM on TrueNAS can't proxy it — NPM runs in a container with no route to the tailnet. Pi-hole points `kuma.griffdawg.dev` at the droplet's tailnet IP (`monitor_tailscale_ip`), not TrueNAS.
+- **Secret:** `cloudflare_api_token` in `group_vars/monitor/vault.yml` (same value as the truenas vault). Edit with `./edit_vault.sh monitor` (the script takes an optional group arg, default `truenas`).
+- After changing `pihole_dns_entries` or an NPM host, clients may serve a stale `NXDOMAIN`; flush with `sudo resolvectl flush-caches` (verify with `dig @192.168.1.104 <name>`). See CLAUDE.md.
 
 ## Adding a new service subdomain
 

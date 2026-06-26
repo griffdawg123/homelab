@@ -1,0 +1,41 @@
+---
+# Grafana Alloy — single observability agent for the homelab.
+# Runs node (system) + cAdvisor (per-container) exporters internally, scrapes
+# them, and remote_writes metrics + ships container logs to Grafana Cloud.
+# Outbound only — nothing is exposed to the internet.
+#
+# The config lives at /mnt/stowage/alloy/config/config.alloy, written by the
+# alloy_config role (postconfig playbook). Until that file exists the container
+# restart-loops; once written it recovers on the next restart automatically.
+app_name: alloy
+type: custom
+
+compose:
+  services:
+    alloy:
+      container_name: alloy
+      image: grafana/alloy:latest
+      restart: unless-stopped
+      network_mode: host
+      privileged: true
+      user: root
+      command:
+        - "run"
+        - "--server.http.listen-addr=0.0.0.0:12345"
+        - "--storage.path=/var/lib/alloy/data"
+        - "/etc/alloy/config.alloy"
+      environment:
+        - TZ=Australia/Sydney
+        - GRAFANA_CLOUD_PROM_URL={{ grafana_cloud_prom_url }}
+        - GRAFANA_CLOUD_PROM_USER={{ grafana_cloud_prom_user }}
+        - GRAFANA_CLOUD_LOKI_URL={{ grafana_cloud_loki_url }}
+        - GRAFANA_CLOUD_LOKI_USER={{ grafana_cloud_loki_user }}
+        - GRAFANA_CLOUD_API_KEY={{ grafana_cloud_api_key }}
+      volumes:
+        - /mnt/stowage/alloy/config:/etc/alloy:ro
+        - /mnt/stowage/alloy/data:/var/lib/alloy/data:rw
+        - /:/rootfs:ro
+        - /proc:/host/proc:ro
+        - /sys:/host/sys:ro
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - /var/lib/docker:/var/lib/docker:ro

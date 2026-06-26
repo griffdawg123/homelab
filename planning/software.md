@@ -12,7 +12,7 @@
 - Nginx Proxy Manager or Caddy — reverse proxy for vanity URLs and routing
 - Vaultwarden — self-hosted Bitwarden password manager (deferred until infra is stable)
 - Restic / Duplicati — automated backups to Backblaze B2
-- Prometheus + Grafana — metrics and alerting
+- ~~Prometheus + Grafana — metrics and alerting~~ → **Grafana Alloy agent (in place)** ships metrics + logs to **Grafana Cloud** (free tier) for dashboards/alerting; keeps RAM off the NAS
 - Torrent client (e.g. qBittorrent)
 - Sunshine — game streaming server for Moonlight client on living room box
 

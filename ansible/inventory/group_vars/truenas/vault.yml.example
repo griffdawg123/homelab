@@ -34,6 +34,11 @@ cloudflare_api_token: "REPLACE_WITH_CLOUDFLARE_API_TOKEN"
 # Pi-hole web admin password
 pihole_web_password: "REPLACE_WITH_PIHOLE_PASSWORD"
 
+# Grafana Cloud access token — used by the Alloy agent to push metrics + logs.
+# Create at Grafana Cloud → Access Policies (or "Generate now" on a Send Metrics page).
+# Needs metrics:write and logs:write scopes. Same token used for Prometheus and Loki.
+grafana_cloud_api_key: "REPLACE_WITH_GRAFANA_CLOUD_TOKEN"
+
 # CouchDB admin credentials for Obsidian LiveSync
 couchdb_admin_user:     "REPLACE_WITH_COUCHDB_USERNAME"
 couchdb_admin_password: "REPLACE_WITH_COUCHDB_PASSWORD"

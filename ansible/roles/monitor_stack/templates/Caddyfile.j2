@@ -1,0 +1,9 @@
+# Managed by Ansible (monitor_stack role). Do not edit on the host.
+# Terminates TLS for {{ monitor_kuma_domain }} (cert via Cloudflare DNS-01) and
+# reverse-proxies to the Uptime Kuma container on the compose network.
+{{ monitor_kuma_domain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  reverse_proxy uptime-kuma:3001
+}

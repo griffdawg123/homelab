@@ -1,0 +1,17 @@
+#cloud-config
+# Bootstraps the monitoring droplet: Docker + Tailscale + tailnet join only.
+# The compose stack (Uptime Kuma + ntfy + Caddy) is deployed afterwards by
+# Ansible (`./run_playbook.sh monitor`, the monitor_stack role), which also
+# templates the Caddy cert config using the Cloudflare token from the vault.
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - ca-certificates
+
+runcmd:
+  # Docker (convenience script also installs the compose plugin)
+  - curl -fsSL https://get.docker.com | sh
+  # Tailscale - joins the tailnet so the apps are reachable privately
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - tailscale up --authkey=${tailscale_auth_key} --hostname=${tailscale_hostname} --ssh

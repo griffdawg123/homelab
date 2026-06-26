@@ -27,6 +27,8 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 | Static file server | 30030 | `static.griffdawg.dev` |
 | CouchDB (Obsidian LiveSync) | 30050 | `couchdb.griffdawg.dev` |
 | Heimdall | 30025 | `homelab.griffdawg.dev` |
+| Grafana Alloy | 12345 (host, internal) | observability agent → Grafana Cloud |
+| Uptime Kuma / ntfy | 3001 / 8080, Caddy on 443 (off-site DO droplet) | `https://kuma.griffdawg.dev` (Caddy + Cloudflare DNS-01); external up/down checks + push paging |
 
 ## Key files
 
@@ -38,6 +40,8 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 - `ansible/apps/pihole.yml` — Pi-hole catalog app config
 - `ansible/roles/nextcloud_config/` — writes `custom.config.php` to set trusted domains/proxies
 - `ansible/roles/pihole_dns/` — pushes `pihole_dns_entries` to Pi-hole v6 API
+- `ansible/apps/alloy.yml` + `ansible/roles/alloy_config/` — Grafana Alloy agent; ships system + container metrics and logs to Grafana Cloud (free tier). Config written to `/mnt/stowage/alloy/config/config.alloy` in `postconfig`. Grafana Cloud endpoints in `vars.yml`, token in vault as `grafana_cloud_api_key`
+- `ansible/roles/monitor_stack/` + `ansible/playbooks/monitor.yml` — deploys the **off-site droplet's** compose stack (Uptime Kuma + ntfy + Caddy) over SSH. Run with `./run_playbook.sh monitor`. Caddy issues the `kuma.griffdawg.dev` cert via Cloudflare DNS-01 using `cloudflare_api_token` from `inventory/group_vars/monitor/vault.yml`. Connection + non-secret config in `inventory/group_vars/monitor/vars.yml`. The droplet is a real SSH host (not API/local like `truenas`); update its `ansible_host` after a rebuild
 
 ## First-time setup
 
@@ -48,6 +52,8 @@ cp ansible/inventory/group_vars/truenas/vault.yml.example ansible/inventory/grou
 ```
 
 Required secrets: `truenas_api_key`, `nextcloud_admin_user`, `nextcloud_admin_password`, `nextcloud_db_password`, `nextcloud_redis_password`, `pihole_web_password`, `cloudflare_api_token`.
+
+The off-site monitoring droplet has its own vault at `inventory/group_vars/monitor/vault.yml` — needs `cloudflare_api_token` (same value as above). Create with `./edit_vault.sh monitor`.
 
 ### 2. Run playbooks (in order)
 ```bash
@@ -77,9 +83,32 @@ Add a proxy host per service using the wildcard cert. Enable Force SSL + HTTP/2.
 | `static.griffdawg.dev` | `http://192.168.1.104:30030` | |
 | `homelab.griffdawg.dev` | `http://192.168.1.104:30025` | |
 
+> **`kuma.griffdawg.dev` is NOT an NPM proxy host.** NPM runs in a Docker container on TrueNAS with no route to the tailnet, so it cannot reach the off-site droplet. Uptime Kuma is fronted by **Caddy on the droplet itself** (TLS via Cloudflare DNS-01); Pi-hole resolves `kuma.griffdawg.dev` to the droplet's tailnet IP (`monitor_tailscale_ip` in `vars.yml`). The droplet's whole compose stack (Kuma + ntfy + Caddy) is managed by the `monitor_stack` Ansible role — `./run_playbook.sh monitor`.
+
 ### 5. Tailscale DNS (one-time, manual)
 In tailscale.com admin → **DNS → Add nameserver → Custom → `100.75.190.13`**
 Enable **Override local DNS**.
+
+### 6. Monitoring droplet (off-site)
+```bash
+cd terraform && terraform apply          # bare droplet: Docker + Tailscale + tailnet join
+cd ../ansible && ./edit_vault.sh monitor # add cloudflare_api_token (same value as the truenas vault)
+./run_playbook.sh monitor                # deploy Uptime Kuma + ntfy + Caddy
+```
+After a rebuild the droplet's IPs change — update `ansible_host` in `inventory/group_vars/monitor/vars.yml` and `monitor_tailscale_ip` in the truenas `vars.yml`.
+
+## After changing DNS or proxy hosts
+
+After editing `pihole_dns_entries` (then running `postconfig`) or adding/changing an NPM proxy host, **a new name can fail to resolve on clients even though Pi-hole is serving it correctly** — clients cache the old `NXDOMAIN` (negative cache) until its TTL expires. Verify with `dig @192.168.1.104 <name>` (queries Pi-hole directly); if that works but the browser/`curl` doesn't, it's a stale client cache. Flush it:
+
+```bash
+sudo resolvectl flush-caches          # systemd-resolved
+sudo systemctl restart tailscaled     # Tailscale MagicDNS, if the client resolves via 100.100.100.100
+```
+
+Browsers cache DNS separately: Firefox/Zen `about:networking#dns` → **Clear DNS Cache** (and confirm **Secure DNS/DoH is off**, or the browser bypasses Pi-hole entirely and no local name will ever resolve); Chrome `chrome://net-internals/#dns`.
+
+Don't pin Pi-hole as a client's *sole* DNS server — keep the router/public resolver as a fallback so losing Pi-hole only drops `*.griffdawg.dev`, not all DNS.
 
 ## What NOT to do
 
