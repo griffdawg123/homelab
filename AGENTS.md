@@ -4,7 +4,7 @@ Context and conventions for AI agents working in this repository.
 
 ## What this repo is
 
-Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fangtooth). Ansible manages TrueNAS configuration via its REST API. Terraform is planned but not yet present.
+Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fangtooth). Ansible manages TrueNAS configuration via its REST API. Terraform (`terraform/`) provisions an off-site DigitalOcean monitoring droplet (Uptime Kuma + ntfy) for the observability stack.
 
 ## Key facts
 

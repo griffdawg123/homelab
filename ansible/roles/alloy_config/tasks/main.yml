@@ -1,0 +1,23 @@
+---
+# Writes the Grafana Alloy agent config to TrueNAS via the filesystem API.
+# Alloy reads this file on each (re)start; until it exists the container
+# restart-loops, then recovers automatically once the file is present.
+# Secrets (Grafana Cloud token) are injected as env vars by the app, not here.
+
+- name: Write Alloy config
+  ansible.builtin.uri:
+    url: "{{ truenas_api_url }}/filesystem/put"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+    body_format: form-multipart
+    body:
+      data: >-
+        {"path": "/mnt/stowage/alloy/config/config.alloy",
+         "options": {"mode": 420}}
+      file:
+        content: "{{ lookup('template', 'config.alloy.j2') }}"
+        filename: config.alloy
+        mime_type: text/plain
+    validate_certs: "{{ truenas_validate_certs }}"
+    status_code: [200, 201]

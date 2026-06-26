@@ -26,6 +26,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 | Tailscale | — | provides remote access via `100.75.190.13` |
 | Static file server | 30030 | `static.griffdawg.dev` |
 | Heimdall | 30025 | `homelab.griffdawg.dev` |
+| Grafana Alloy | 12345 (host, internal) | observability agent → Grafana Cloud |
 
 ## Key files
 
@@ -37,6 +38,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 - `ansible/apps/pihole.yml` — Pi-hole catalog app config
 - `ansible/roles/nextcloud_config/` — writes `custom.config.php` to set trusted domains/proxies
 - `ansible/roles/pihole_dns/` — pushes `pihole_dns_entries` to Pi-hole v6 API
+- `ansible/apps/alloy.yml` + `ansible/roles/alloy_config/` — Grafana Alloy agent; ships system + container metrics and logs to Grafana Cloud (free tier). Config written to `/mnt/stowage/alloy/config/config.alloy` in `postconfig`. Grafana Cloud endpoints in `vars.yml`, token in vault as `grafana_cloud_api_key`
 
 ## First-time setup
 

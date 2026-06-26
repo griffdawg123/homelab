@@ -41,6 +41,9 @@ truenas_shares:
   - dataset: "stowage/nextcloud"
   - dataset: "stowage/nextcloud/html"
   - dataset: "stowage/nextcloud/data"
+  - dataset: "stowage/alloy"
+  - dataset: "stowage/alloy/config"
+  - dataset: "stowage/alloy/data"
   - dataset: "stowage/stowage-share"
     smb:
       enabled: true
@@ -82,6 +85,21 @@ pihole_web_port: 20720
 # Local DNS overrides applied to Pi-hole via the pihole_dns role (postconfig playbook).
 # All services resolve to the TrueNAS Tailscale IP so URLs work
 # identically at home and when connected via Tailscale remotely.
+# ---------------------------------------------------------------------------
+# Observability — Grafana Alloy agent (ansible/apps/alloy.yml) ships system +
+# container metrics and logs to Grafana Cloud (free tier). The droplet (Uptime
+# Kuma + ntfy) handles external uptime checks and alerting.
+#
+# Fill these in after creating a free Grafana Cloud stack:
+#   Grafana Cloud → Connections → "Send Metrics" (Prometheus) and "Send Logs" (Loki)
+# The API token is the only secret and lives in vault.yml as grafana_cloud_api_key.
+# ---------------------------------------------------------------------------
+alloy_instance_label:    "truenas-scale"
+grafana_cloud_prom_url:  "https://prometheus-prod-41-prod-au-southeast-1.grafana.net/api/prom/push"   # e.g. https://prometheus-prod-XX.grafana.net/api/prom/push
+grafana_cloud_prom_user: "3333432"           # numeric instance id
+grafana_cloud_loki_url:  "https://logs-prod-026.grafana.net/loki/api/v1/push"           # e.g. https://logs-prod-XX.grafana.net/loki/api/v1/push
+grafana_cloud_loki_user: "1662391"           # numeric instance id
+
 pihole_dns_entries:
   - name: "nextcloud.{{ homelab_domain }}"
     ip: "{{ truenas_tailscale_ip }}"

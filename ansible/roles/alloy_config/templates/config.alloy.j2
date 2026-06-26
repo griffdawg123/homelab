@@ -1,0 +1,87 @@
+// Grafana Alloy config — managed by Ansible (alloy_config role). Do not edit by hand.
+//
+// Ships to Grafana Cloud (free tier). Credentials come from env vars set by the
+// alloy.yml app; the API token is referenced via sys.env() so no secret is
+// stored in this file.
+
+// ---------------------------------------------------------------------------
+// Write endpoints
+// ---------------------------------------------------------------------------
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROM_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROM_USER")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+  external_labels = {
+    instance = "{{ alloy_instance_label | default('truenas-scale') }}",
+  }
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+  external_labels = {
+    instance = "{{ alloy_instance_label | default('truenas-scale') }}",
+  }
+}
+
+// ---------------------------------------------------------------------------
+// System metrics (node_exporter equivalent)
+// ---------------------------------------------------------------------------
+prometheus.exporter.unix "node" {
+  procfs_path = "/host/proc"
+  sysfs_path  = "/host/sys"
+  rootfs_path = "/rootfs"
+}
+
+prometheus.scrape "node" {
+  targets         = prometheus.exporter.unix.node.targets
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+  scrape_interval = "60s"
+  job_name        = "node"
+}
+
+// ---------------------------------------------------------------------------
+// Per-container metrics (what's running + resource use)
+// ---------------------------------------------------------------------------
+prometheus.exporter.cadvisor "containers" {
+  docker_host      = "unix:///var/run/docker.sock"
+  storage_duration = "5m"
+}
+
+prometheus.scrape "containers" {
+  targets         = prometheus.exporter.cadvisor.containers.targets
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+  scrape_interval = "60s"
+  job_name        = "cadvisor"
+}
+
+// ---------------------------------------------------------------------------
+// Container logs -> Loki
+// ---------------------------------------------------------------------------
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.write.grafana_cloud.receiver]
+}

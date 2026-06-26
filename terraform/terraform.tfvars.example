@@ -1,0 +1,18 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Alternatively export each
+# as an environment variable, e.g. export TF_VAR_do_token=...
+#
+# Secrets here are NOT encrypted — terraform.tfvars is gitignored. Do not commit it.
+
+# DigitalOcean API token — cloud.digitalocean.com/account/api/tokens (read+write)
+do_token = "dop_v1_REPLACE_WITH_DIGITALOCEAN_API_TOKEN"
+
+# SSH public key for break-glass access (one of your existing keys)
+ssh_public_key = "ssh-ed25519 AAAA...REPLACE griffdawg@archlinux"
+
+# Tailscale auth key — tailscale.com/admin/settings/keys
+# Recommend: ephemeral + pre-approved so the droplet auto-joins the tailnet.
+tailscale_auth_key = "tskey-auth-REPLACE"
+
+# Optional overrides (defaults shown):
+# region       = "syd1"
+# droplet_size = "s-1vcpu-1gb"

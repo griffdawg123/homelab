@@ -1,0 +1,49 @@
+#cloud-config
+# Provisions the monitoring droplet: Docker + Tailscale + the compose stack.
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - ca-certificates
+
+write_files:
+  - path: /opt/monitoring/docker-compose.yml
+    permissions: "0644"
+    content: |
+      services:
+        uptime-kuma:
+          image: louislam/uptime-kuma:1
+          container_name: uptime-kuma
+          restart: unless-stopped
+          ports:
+            - "3001:3001"
+          volumes:
+            - uptime-kuma:/app/data
+
+        ntfy:
+          image: binwiederhier/ntfy:latest
+          container_name: ntfy
+          restart: unless-stopped
+          command: ["serve"]
+          environment:
+            - TZ=Australia/Sydney
+            - NTFY_BEHIND_PROXY=false
+          ports:
+            - "8080:80"
+          volumes:
+            - ntfy-cache:/var/cache/ntfy
+            - ntfy-etc:/etc/ntfy
+
+      volumes:
+        uptime-kuma:
+        ntfy-cache:
+        ntfy-etc:
+
+runcmd:
+  # Docker (convenience script also installs the compose plugin)
+  - curl -fsSL https://get.docker.com | sh
+  # Tailscale - joins the tailnet so the apps are reachable privately
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - tailscale up --authkey=${tailscale_auth_key} --hostname=${tailscale_hostname} --ssh
+  # Bring up the stack
+  - cd /opt/monitoring && docker compose up -d
