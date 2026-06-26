@@ -1,0 +1,6 @@
+---
+- name: Configure the off-site monitoring droplet
+  hosts: monitor
+  gather_facts: false
+  roles:
+    - monitor_stack

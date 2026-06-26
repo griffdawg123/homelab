@@ -40,6 +40,7 @@ See `AGENTS.md` for full conventions. This file adds Claude-specific guidance.
 - `ansible/roles/nextcloud_config/` — writes `custom.config.php` to set trusted domains/proxies
 - `ansible/roles/pihole_dns/` — pushes `pihole_dns_entries` to Pi-hole v6 API
 - `ansible/apps/alloy.yml` + `ansible/roles/alloy_config/` — Grafana Alloy agent; ships system + container metrics and logs to Grafana Cloud (free tier). Config written to `/mnt/stowage/alloy/config/config.alloy` in `postconfig`. Grafana Cloud endpoints in `vars.yml`, token in vault as `grafana_cloud_api_key`
+- `ansible/roles/monitor_stack/` + `ansible/playbooks/monitor.yml` — deploys the **off-site droplet's** compose stack (Uptime Kuma + ntfy + Caddy) over SSH. Run with `./run_playbook.sh monitor`. Caddy issues the `kuma.griffdawg.dev` cert via Cloudflare DNS-01 using `cloudflare_api_token` from `inventory/group_vars/monitor/vault.yml`. Connection + non-secret config in `inventory/group_vars/monitor/vars.yml`. The droplet is a real SSH host (not API/local like `truenas`); update its `ansible_host` after a rebuild
 
 ## First-time setup
 
@@ -50,6 +51,8 @@ cp ansible/inventory/group_vars/truenas/vault.yml.example ansible/inventory/grou
 ```
 
 Required secrets: `truenas_api_key`, `nextcloud_admin_user`, `nextcloud_admin_password`, `nextcloud_db_password`, `nextcloud_redis_password`, `pihole_web_password`, `cloudflare_api_token`.
+
+The off-site monitoring droplet has its own vault at `inventory/group_vars/monitor/vault.yml` — needs `cloudflare_api_token` (same value as above). Create with `./edit_vault.sh monitor`.
 
 ### 2. Run playbooks (in order)
 ```bash
@@ -79,11 +82,19 @@ Add a proxy host per service using the wildcard cert. Enable Force SSL + HTTP/2.
 | `static.griffdawg.dev` | `http://192.168.1.104:30030` | |
 | `homelab.griffdawg.dev` | `http://192.168.1.104:30025` | |
 
-> **`kuma.griffdawg.dev` is NOT an NPM proxy host.** NPM runs in a Docker container on TrueNAS with no route to the tailnet, so it cannot reach the off-site droplet. Uptime Kuma is fronted by **Caddy on the droplet itself** (TLS via Cloudflare DNS-01); Pi-hole resolves `kuma.griffdawg.dev` to the droplet's tailnet IP (`monitor_tailscale_ip` in `vars.yml`).
+> **`kuma.griffdawg.dev` is NOT an NPM proxy host.** NPM runs in a Docker container on TrueNAS with no route to the tailnet, so it cannot reach the off-site droplet. Uptime Kuma is fronted by **Caddy on the droplet itself** (TLS via Cloudflare DNS-01); Pi-hole resolves `kuma.griffdawg.dev` to the droplet's tailnet IP (`monitor_tailscale_ip` in `vars.yml`). The droplet's whole compose stack (Kuma + ntfy + Caddy) is managed by the `monitor_stack` Ansible role — `./run_playbook.sh monitor`.
 
 ### 5. Tailscale DNS (one-time, manual)
 In tailscale.com admin → **DNS → Add nameserver → Custom → `100.75.190.13`**
 Enable **Override local DNS**.
+
+### 6. Monitoring droplet (off-site)
+```bash
+cd terraform && terraform apply          # bare droplet: Docker + Tailscale + tailnet join
+cd ../ansible && ./edit_vault.sh monitor # add cloudflare_api_token (same value as the truenas vault)
+./run_playbook.sh monitor                # deploy Uptime Kuma + ntfy + Caddy
+```
+After a rebuild the droplet's IPs change — update `ansible_host` in `inventory/group_vars/monitor/vars.yml` and `monitor_tailscale_ip` in the truenas `vars.yml`.
 
 ## After changing DNS or proxy hosts
 

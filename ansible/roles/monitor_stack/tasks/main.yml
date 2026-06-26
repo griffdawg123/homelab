@@ -1,0 +1,55 @@
+---
+# Deploys the monitoring stack to the off-site droplet over SSH. cloud-init only
+# bootstraps Docker + Tailscale; everything below is the declarative app config.
+# The Cloudflare token comes from the vault (cloudflare_api_token) and is written
+# to a 0600 .env that Caddy reads for DNS-01 cert issuance.
+
+- name: Ensure compose + caddy directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ monitor_compose_dir }}"
+    - "{{ monitor_compose_dir }}/caddy"
+
+- name: Remove legacy compose override (superseded by the managed compose file)
+  ansible.builtin.file:
+    path: "{{ monitor_compose_dir }}/docker-compose.override.yml"
+    state: absent
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitor_compose_dir }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Install the Caddy Dockerfile (built with the Cloudflare DNS module)
+  ansible.builtin.copy:
+    src: Dockerfile
+    dest: "{{ monitor_compose_dir }}/caddy/Dockerfile"
+    mode: "0644"
+
+- name: Template the Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ monitor_compose_dir }}/caddy/Caddyfile"
+    mode: "0644"
+
+- name: Write .env with the Cloudflare token (from vault)
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ monitor_compose_dir }}/.env"
+    mode: "0600"
+  no_log: true
+
+- name: Bring up the monitoring stack
+  ansible.builtin.command:
+    cmd: docker compose up -d --build
+    chdir: "{{ monitor_compose_dir }}"
+  register: monitor_compose_up
+  changed_when: >-
+    ('Recreat' in monitor_compose_up.stderr) or
+    ('Creat' in monitor_compose_up.stderr) or
+    ('Started' in monitor_compose_up.stderr) or
+    ('Built' in monitor_compose_up.stderr)

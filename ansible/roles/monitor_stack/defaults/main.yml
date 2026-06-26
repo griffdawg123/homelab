@@ -1,0 +1,10 @@
+---
+# Off-site monitoring droplet compose stack (Uptime Kuma + ntfy + Caddy).
+monitor_compose_dir: /opt/monitoring
+monitor_timezone: "Australia/Sydney"
+
+# Public hostname Caddy terminates TLS for (cert via Cloudflare DNS-01).
+monitor_kuma_domain: "kuma.griffdawg.dev"
+
+monitor_kuma_image: "louislam/uptime-kuma:1"
+monitor_ntfy_image: "binwiederhier/ntfy:latest"

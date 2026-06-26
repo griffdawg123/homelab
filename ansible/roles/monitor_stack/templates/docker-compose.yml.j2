@@ -1,0 +1,48 @@
+# Managed by Ansible (monitor_stack role). Do not edit on the host.
+services:
+  uptime-kuma:
+    image: {{ monitor_kuma_image }}
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma:/app/data
+
+  ntfy:
+    image: {{ monitor_ntfy_image }}
+    container_name: ntfy
+    restart: unless-stopped
+    command: ["serve"]
+    environment:
+      - TZ={{ monitor_timezone }}
+      - NTFY_BEHIND_PROXY=false
+    ports:
+      - "8080:80"
+    volumes:
+      - ntfy-cache:/var/cache/ntfy
+      - ntfy-etc:/etc/ntfy
+
+  caddy:
+    build:
+      context: ./caddy
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - uptime-kuma
+
+volumes:
+  uptime-kuma:
+  ntfy-cache:
+  ntfy-etc:
+  caddy-data:
+  caddy-config:

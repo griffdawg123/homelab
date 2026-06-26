@@ -38,9 +38,3 @@ variable "tailscale_auth_key" {
   type        = string
   sensitive   = true
 }
-
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token (Zone:DNS:Edit on the griffdawg.dev zone). Used by Caddy on the droplet to issue/renew the kuma.griffdawg.dev cert via DNS-01. Same token as the Ansible vault's cloudflare_api_token."
-  type        = string
-  sensitive   = true
-}

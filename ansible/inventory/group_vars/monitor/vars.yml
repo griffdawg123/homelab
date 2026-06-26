@@ -1,0 +1,17 @@
+---
+# Off-site monitoring droplet (provisioned by terraform/, bootstrapped by
+# cloud-init to Docker + Tailscale; the app stack is deployed by the
+# monitor_stack role via `./run_playbook.sh monitor`).
+
+# Connection — reached over SSH with the dedicated key. Use the PUBLIC IP: the
+# tailnet IP routes through Tailscale SSH, which needs interactive auth. Both the
+# public and tailnet IPs change on a droplet rebuild — update this and
+# monitor_tailscale_ip (truenas vars.yml) afterwards.
+ansible_host: "170.64.235.189"
+ansible_user: root
+ansible_ssh_private_key_file: "~/.ssh/homelab-monitor"
+ansible_python_interpreter: /usr/bin/python3
+
+monitor_compose_dir: /opt/monitoring
+monitor_timezone: "Australia/Sydney"
+monitor_kuma_domain: "kuma.griffdawg.dev"

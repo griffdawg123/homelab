@@ -19,9 +19,8 @@ resource "digitalocean_droplet" "monitor" {
 
   # cloud-init installs Docker + Tailscale and brings up the compose stack.
   user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
-    tailscale_auth_key   = var.tailscale_auth_key
-    tailscale_hostname   = var.droplet_name
-    cloudflare_api_token = var.cloudflare_api_token
+    tailscale_auth_key = var.tailscale_auth_key
+    tailscale_hostname = var.droplet_name
   })
 
   tags = ["homelab", "monitoring"]

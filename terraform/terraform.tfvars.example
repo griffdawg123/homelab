@@ -13,11 +13,6 @@ ssh_public_key = "ssh-ed25519 AAAA...REPLACE griffdawg@archlinux"
 # Recommend: ephemeral + pre-approved so the droplet auto-joins the tailnet.
 tailscale_auth_key = "tskey-auth-REPLACE"
 
-# Cloudflare API token (Zone:DNS:Edit on griffdawg.dev) — Caddy on the droplet
-# uses it for the kuma.griffdawg.dev cert via DNS-01. Same token as the Ansible
-# vault's cloudflare_api_token.
-cloudflare_api_token = "REPLACE_WITH_CLOUDFLARE_API_TOKEN"
-
 # Optional overrides (defaults shown):
 # region       = "syd1"
 # droplet_size = "s-1vcpu-1gb"
