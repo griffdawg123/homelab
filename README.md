@@ -6,8 +6,9 @@ Configuration and infrastructure-as-code for my homelab, built around TrueNAS SC
 
 - **TrueNAS SCALE 25.04 (Fangtooth)** — storage, apps, and virtualisation
 - **ZFS pool: `stowage`** — 3.7 TiB, all data lives here
-- **Ansible** — configuration management (this repo)
-- **Terraform** — infrastructure management (planned)
+- **Ansible** — configuration management (TrueNAS + the off-site monitoring droplet)
+- **Terraform** — provisions the off-site monitoring droplet (`terraform/`, state in Terraform Cloud)
+- **Grafana Alloy → Grafana Cloud** — metrics + logs; off-site **Uptime Kuma + ntfy** for up/down + paging
 
 ## Ansible
 
@@ -41,8 +42,11 @@ cd ansible
 ./run_playbook.sh storage    # ZFS datasets, SMB and NFS shares
 ./run_playbook.sh users      # local users
 ./run_playbook.sh apps       # install/verify apps
+./run_playbook.sh postconfig # Nextcloud/Pi-hole DNS/static index/Grafana Alloy
+./run_playbook.sh monitor    # off-site droplet stack (Uptime Kuma + ntfy + Caddy)
 
-./edit_vault.sh              # edit encrypted secrets
+./edit_vault.sh              # edit encrypted secrets (truenas)
+./edit_vault.sh monitor      # edit the monitoring droplet's vault
 ```
 
 ### Playbooks
@@ -54,6 +58,8 @@ cd ansible
 | `storage` | `truenas_storage` | ZFS datasets, SMB shares, NFS shares |
 | `users` | `truenas_users` | Local TrueNAS users with Samba auth |
 | `apps` | `truenas_apps` | TrueNAS catalog and custom Docker Compose apps |
+| `postconfig` | `nextcloud_config`, `pihole_dns`, `static_index`, `alloy_config` | Post-deploy config: Nextcloud trusted domains, Pi-hole DNS, static index, Grafana Alloy |
+| `monitor` | `monitor_stack` | Off-site droplet stack (Uptime Kuma + ntfy + Caddy) — runs over SSH, not the TrueNAS API |
 
 ### Apps
 
@@ -69,6 +75,22 @@ Apps are defined as individual YAML files in `ansible/apps/`. Adding a new file 
 | Pi-hole | Catalog (community) | 53, 20720 | — (ix_volume) |
 | Static file server | Custom Docker Compose | 30030 | `stowage/stowage-share/static` |
 | Tailscale | Catalog (community) | — | — (ix_volume for state) |
+| Grafana Alloy | Custom Docker Compose | 12345 (host, internal) | `stowage/alloy` |
+
+## Observability
+
+Two layers, both managed as code:
+
+- **Metrics + logs → Grafana Cloud.** A single **Grafana Alloy** agent on TrueNAS (`ansible/apps/alloy.yml` + the `alloy_config` role) runs node + cAdvisor exporters and `remote_write`s system/container metrics plus container logs to Grafana Cloud (free tier). Outbound-only; endpoints in `vars.yml`, token in the vault (`grafana_cloud_api_key`). Deployed by `apps` + `postconfig`.
+- **External up/down + paging.** An off-site **DigitalOcean droplet** (`terraform/`) runs **Uptime Kuma** + **ntfy**, so alerting survives a full homelab outage. Terraform only bootstraps the box (Docker + Tailscale + tailnet join); the **`monitor_stack`** Ansible role deploys the compose stack and a **Caddy** reverse proxy that serves `https://kuma.griffdawg.dev` with a Cloudflare DNS-01 cert (NPM on TrueNAS can't reach the tailnet-only droplet). The droplet is a real SSH host in the `monitor` inventory group.
+
+```bash
+cd terraform && terraform apply          # bootstrap the droplet
+cd ../ansible && ./edit_vault.sh monitor # add cloudflare_api_token (same value as the truenas vault)
+./run_playbook.sh monitor                # deploy Uptime Kuma + ntfy + Caddy
+```
+
+After a droplet rebuild its IPs change — update `ansible_host` in `inventory/group_vars/monitor/vars.yml` and `monitor_tailscale_ip` in the truenas `vars.yml`.
 
 ## Heimdall
 
@@ -109,18 +131,18 @@ git commit -m "Update Heimdall config backup"
 ansible/
 ├── ansible.cfg
 ├── run_playbook.sh
-├── edit_vault.sh
+├── edit_vault.sh                  # ./edit_vault.sh [group]   (default: truenas)
 ├── apps/                          # one file per app
 ├── inventory/
-│   ├── hosts.yml
-│   └── group_vars/truenas/
-│       ├── vars.yml               # non-secret config
-│       ├── vault.yml              # encrypted secrets (committed)
-│       └── vault.yml.example      # template
+│   ├── hosts.yml                  # truenas (API/local) + monitor (SSH droplet)
+│   └── group_vars/
+│       ├── truenas/               # vars.yml, vault.yml (encrypted, committed), vault.yml.example
+│       └── monitor/               # off-site droplet: connection vars + its own vault
 ├── playbooks/
 └── roles/
-    ├── truenas_apps/
-    ├── truenas_settings/
-    ├── truenas_storage/
-    └── truenas_users/
+    ├── truenas_apps/  truenas_settings/  truenas_storage/  truenas_users/
+    ├── nextcloud_config/  pihole_dns/  static_index/  alloy_config/
+    └── monitor_stack/             # off-site droplet stack (Kuma + ntfy + Caddy)
 ```
+
+Infrastructure for the off-site monitoring droplet lives in `terraform/` (DigitalOcean, state in Terraform Cloud).
