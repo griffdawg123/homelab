@@ -4,7 +4,7 @@
 # The Cloudflare token comes from the vault (cloudflare_api_token) and is written
 # to a 0600 .env that Caddy reads for DNS-01 cert issuance.
 
-- name: Ensure compose + caddy directories exist
+- name: Ensure compose + caddy + loki + grafana directories exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -12,6 +12,8 @@
   loop:
     - "{{ monitor_compose_dir }}"
     - "{{ monitor_compose_dir }}/caddy"
+    - "{{ monitor_compose_dir }}/loki"
+    - "{{ monitor_compose_dir }}/grafana/provisioning/datasources"
 
 - name: Remove legacy compose override (superseded by the managed compose file)
   ansible.builtin.file:
@@ -36,7 +38,19 @@
     dest: "{{ monitor_compose_dir }}/caddy/Caddyfile"
     mode: "0644"
 
-- name: Write .env with the Cloudflare token (from vault)
+- name: Template the Loki config
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ monitor_compose_dir }}/loki/loki-config.yml"
+    mode: "0644"
+
+- name: Template the Grafana Loki datasource provisioning
+  ansible.builtin.template:
+    src: grafana-datasources.yml.j2
+    dest: "{{ monitor_compose_dir }}/grafana/provisioning/datasources/loki.yml"
+    mode: "0644"
+
+- name: Write .env with secrets (Cloudflare token, Grafana admin password)
   ansible.builtin.template:
     src: env.j2
     dest: "{{ monitor_compose_dir }}/.env"

@@ -1,10 +1,29 @@
 ---
-# Off-site monitoring droplet compose stack (Uptime Kuma + ntfy + Caddy).
+# Off-site monitoring droplet compose stack (Uptime Kuma + ntfy + Caddy, plus
+# self-hosted Grafana + Loki). Domain-specific config (monitor_sites,
+# monitor_tailscale_ip, monitor_*_domain) lives in group_vars/monitor/vars.yml —
+# these are just generic role defaults.
 monitor_compose_dir: /opt/monitoring
 monitor_timezone: "Australia/Sydney"
 
-# Public hostname Caddy terminates TLS for (cert via Cloudflare DNS-01).
-monitor_kuma_domain: "kuma.griffdawg.dev"
+# Public HTTPS sites Caddy terminates TLS for (cert via Cloudflare DNS-01) and
+# reverse-proxies to a container on the compose network. Caddyfile.j2 loops
+# over this list, so adding a new public service needs no template change —
+# just append {name, domain, upstream} to monitor_sites in
+# group_vars/monitor/vars.yml.
+monitor_sites: []
 
 monitor_kuma_image: "louislam/uptime-kuma:1"
 monitor_ntfy_image: "binwiederhier/ntfy:latest"
+monitor_grafana_image: "grafana/grafana-oss:latest"
+monitor_loki_image: "grafana/loki:latest"
+
+# Loki's push/query API has no built-in auth, so it deliberately does NOT get a
+# public Caddy site (it's not in monitor_sites). It's published only on the
+# droplet's tailnet interface (monitor_tailscale_ip) — Alloy on TrueNAS pushes
+# logs to it directly over Tailscale, which is already an encrypted link.
+monitor_loki_port: 3100
+
+# Non-secret Grafana admin username. The password is a vault secret
+# (grafana_admin_password) injected via .env — see templates/env.j2.
+monitor_grafana_admin_user: "admin"

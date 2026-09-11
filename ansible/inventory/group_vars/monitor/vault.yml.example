@@ -5,6 +5,12 @@
 # Or simply: ./edit_vault.sh monitor
 #
 # Cloudflare API token (Edit zone DNS on griffdawg.dev) — Caddy on the droplet
-# uses it for the kuma.griffdawg.dev cert via DNS-01. This is the SAME token as
-# the truenas vault's cloudflare_api_token; paste the same value here.
+# uses it for TLS certs (kuma.griffdawg.dev, grafana.griffdawg.dev) via DNS-01.
+# This is the SAME token as the truenas vault's cloudflare_api_token; paste the
+# same value here.
 cloudflare_api_token: "REPLACE_WITH_CLOUDFLARE_API_TOKEN"
+
+# Grafana admin password (self-hosted Grafana on this droplet, public via
+# grafana.griffdawg.dev). Username is monitor_grafana_admin_user in vars.yml
+# (default "admin"). Set via GF_SECURITY_ADMIN_PASSWORD in .env.
+grafana_admin_password: "REPLACE_WITH_GRAFANA_ADMIN_PASSWORD"

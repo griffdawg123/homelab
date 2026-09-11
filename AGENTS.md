@@ -4,7 +4,7 @@ Context and conventions for AI agents working in this repository.
 
 ## What this repo is
 
-Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fangtooth). Ansible manages TrueNAS configuration via its REST API, and also configures an off-site DigitalOcean monitoring droplet over SSH (the `monitor` inventory group). Terraform (`terraform/`, state in Terraform Cloud) provisions that droplet but only **bootstraps** it (Docker + Tailscale + tailnet join); the `monitor_stack` Ansible role then deploys its compose stack (Uptime Kuma + ntfy + Caddy). Observability: a **Grafana Alloy** agent on TrueNAS ships metrics + logs to **Grafana Cloud**, and the droplet provides external up/down checks + push paging that survive a full homelab outage.
+Infrastructure-as-code for a personal homelab built on TrueNAS SCALE 25.04 (Fangtooth). Ansible manages TrueNAS configuration via its REST API, and also configures an off-site DigitalOcean monitoring droplet over SSH (the `monitor` inventory group). Terraform (`terraform/`, state in Terraform Cloud) provisions that droplet but only **bootstraps** it (Docker + Tailscale + tailnet join); the `monitor_stack` Ansible role then deploys its compose stack (Uptime Kuma + ntfy + self-hosted Grafana + Loki + Caddy). Observability: a **Grafana Alloy** agent on TrueNAS ships metrics + logs to **Grafana Cloud** today, and self-hosted Grafana/Loki on the droplet are a second, independent target; the droplet also provides external up/down checks + push paging that survive a full homelab outage.
 
 ## Key facts
 
@@ -43,7 +43,7 @@ Run from `ansible/`:
 
 The `monitor` playbook is **separate** — it targets the off-site droplet over SSH (not the TrueNAS API), so it isn't part of the TrueNAS chain above:
 ```
-monitor    → deploys the droplet compose stack (Uptime Kuma + ntfy + Caddy) via the monitor_stack role
+monitor    → deploys the droplet compose stack (Uptime Kuma + ntfy + Grafana + Loki + Caddy) via the monitor_stack role
 ```
 
 ## Manual steps (not automated by Ansible)
@@ -86,9 +86,10 @@ This makes all Tailscale devices use Pi-hole for DNS, so `*.griffdawg.dev` resol
 ## Monitoring droplet (off-site)
 
 - **Provisioned** by `terraform/` (DigitalOcean, state in Terraform Cloud). cloud-init **only** installs Docker + Tailscale and joins the tailnet — keep `cloud-init.yaml.tftpl` **ASCII-only** (an em-dash in a comment once broke the cloud-config parse and silently skipped all `runcmd`).
-- **Configured** by the `monitor_stack` role over SSH (`monitor` group, host `homelab-monitor`, connects via `~/.ssh/homelab-monitor` to the droplet's **public IP** — the tailnet IP routes through Tailscale SSH, which needs interactive auth). The role templates `docker-compose.yml` (Uptime Kuma + ntfy + Caddy), the Caddyfile, and a `0600` `.env`. After a rebuild, update `ansible_host` (group_vars/monitor) and `monitor_tailscale_ip` (truenas vars) — both IPs change.
-- **Caddy** terminates TLS for `kuma.griffdawg.dev` via Cloudflare DNS-01. NPM on TrueNAS can't proxy it — NPM runs in a container with no route to the tailnet. Pi-hole points `kuma.griffdawg.dev` at the droplet's tailnet IP (`monitor_tailscale_ip`), not TrueNAS.
-- **Secret:** `cloudflare_api_token` in `group_vars/monitor/vault.yml` (same value as the truenas vault). Edit with `./edit_vault.sh monitor` (the script takes an optional group arg, default `truenas`).
+- **Configured** by the `monitor_stack` role over SSH (`monitor` group, host `homelab-monitor`, connects via `~/.ssh/homelab-monitor` to the droplet's **public IP** — the tailnet IP routes through Tailscale SSH, which needs interactive auth). The role templates `docker-compose.yml` (Uptime Kuma + ntfy + Grafana + Loki + Caddy), the Caddyfile, Loki's config, Grafana's Loki-datasource provisioning, and a `0600` `.env`. After a rebuild, update `ansible_host` (group_vars/monitor) and `monitor_tailscale_ip` (both group_vars/monitor and truenas vars) — all change.
+- **Caddy's public sites are data-driven**: `monitor_sites` in `group_vars/monitor/vars.yml` is a list of `{name, domain, upstream}`, and `Caddyfile.j2` loops over it — one TLS (Cloudflare DNS-01) + reverse_proxy block per entry. Currently `kuma.griffdawg.dev` → `uptime-kuma:3001` and `grafana.griffdawg.dev` → `grafana:3000`. Add a new public service by appending to `monitor_sites`; no template edits needed. NPM on TrueNAS can't front these — it runs in a container with no route to the tailnet — so Pi-hole points each `monitor_sites` domain at the droplet's tailnet IP (`monitor_tailscale_ip`), not TrueNAS.
+- **Loki is deliberately not in `monitor_sites`** — its push/query API has no built-in auth, so it gets no public Caddy site. It's published only on the droplet's own tailnet IP (`monitor_tailscale_ip:3100` — `monitor_loki_port` in defaults), reachable by Alloy on TrueNAS directly over Tailscale (already encrypted).
+- **Secrets** in `group_vars/monitor/vault.yml`: `cloudflare_api_token` (same value as the truenas vault) and `grafana_admin_password` (self-hosted Grafana admin login, injected via `.env` as `GF_SECURITY_ADMIN_PASSWORD`). Edit with `./edit_vault.sh monitor` (the script takes an optional group arg, default `truenas`).
 - After changing `pihole_dns_entries` or an NPM host, clients may serve a stale `NXDOMAIN`; flush with `sudo resolvectl flush-caches` (verify with `dig @192.168.1.104 <name>`). See CLAUDE.md.
 
 ## Adding a new service subdomain

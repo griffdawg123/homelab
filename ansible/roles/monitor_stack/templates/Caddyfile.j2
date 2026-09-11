@@ -1,9 +1,13 @@
 # Managed by Ansible (monitor_stack role). Do not edit on the host.
-# Terminates TLS for {{ monitor_kuma_domain }} (cert via Cloudflare DNS-01) and
-# reverse-proxies to the Uptime Kuma container on the compose network.
-{{ monitor_kuma_domain }} {
+# One block per public site in monitor_sites (group_vars/monitor/vars.yml) —
+# each terminates TLS via Cloudflare DNS-01 and reverse-proxies to its upstream
+# container on the compose network. Add a new public service by appending
+# {name, domain, upstream} to monitor_sites; this template needs no changes.
+{% for site in monitor_sites %}
+{{ site.domain }} {
   tls {
     dns cloudflare {env.CLOUDFLARE_API_TOKEN}
   }
-  reverse_proxy uptime-kuma:3001
+  reverse_proxy {{ site.upstream }}
 }
+{% endfor %}
