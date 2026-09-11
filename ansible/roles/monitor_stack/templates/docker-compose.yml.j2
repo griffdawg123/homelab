@@ -23,6 +23,35 @@ services:
       - ntfy-cache:/var/cache/ntfy
       - ntfy-etc:/etc/ntfy
 
+  # Public via the grafana.griffdawg.dev Caddy site (see monitor_sites).
+  grafana:
+    image: {{ monitor_grafana_image }}
+    container_name: grafana
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - GF_SERVER_ROOT_URL=https://{{ monitor_grafana_domain }}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+
+  # Tailnet-only (no Caddy site): Loki's push/query API has no built-in auth.
+  # Bound to this droplet's own Tailscale IP so it's unreachable from the
+  # public internet; Alloy on TrueNAS pushes here directly over Tailscale.
+  loki:
+    image: {{ monitor_loki_image }}
+    container_name: loki
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "{{ monitor_tailscale_ip }}:{{ monitor_loki_port }}:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+
   caddy:
     build:
       context: ./caddy
@@ -39,10 +68,13 @@ services:
       - caddy-config:/config
     depends_on:
       - uptime-kuma
+      - grafana
 
 volumes:
   uptime-kuma:
   ntfy-cache:
   ntfy-etc:
+  grafana-data:
+  loki-data:
   caddy-data:
   caddy-config:

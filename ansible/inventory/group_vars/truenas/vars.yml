@@ -127,4 +127,6 @@ pihole_dns_entries:
     ip: "{{ truenas_tailscale_ip }}"
   - name: "kuma.{{ homelab_domain }}"
     ip: "{{ monitor_tailscale_ip }}"
+  - name: "grafana.{{ homelab_domain }}"
+    ip: "{{ monitor_tailscale_ip }}"
 
